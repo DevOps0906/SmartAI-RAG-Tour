@@ -11,3 +11,4 @@ data/threads.sqlite-*
 
 .vercel
 .env*
+!.env.example
