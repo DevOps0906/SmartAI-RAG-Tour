@@ -1,0 +1,13 @@
+{#- "이 기기에서 삭제" 확인 대화상자 (<dialog>, alert/confirm 금지). 로컬 저장본만 지우고 서버 대화는 그대로다. 동작: app.js (delete-local-plan, confirm-delete, cancel-delete) -#}
+{% from "components/button.html" import button %}
+<dialog id="delete-modal" aria-labelledby="delete-modal-title" aria-describedby="delete-modal-desc"
+  class="m-auto w-[min(26rem,calc(100vw-2rem))] rounded-card border border-border bg-surface p-0 text-text backdrop:bg-text/40">
+  <div class="space-y-2 p-5">
+    <h2 id="delete-modal-title" class="text-base font-semibold leading-6 text-text">이 기기에서 계획을 삭제할까요?</h2>
+    <p id="delete-modal-desc" class="break-keep text-sm leading-6 text-text-muted"><span id="delete-modal-note">이 브라우저에 저장된 사본만 지워져요.</span> <span id="delete-modal-name" class="font-medium text-text"></span></p>
+  </div>
+  <div class="flex justify-end gap-2 border-t border-border p-3">
+    {{ button("취소", variant="secondary", size="md", attrs='data-action="cancel-delete"') }}
+    {{ button("삭제", variant="danger", size="md", attrs='data-action="confirm-delete"') }}
+  </div>
+</dialog>

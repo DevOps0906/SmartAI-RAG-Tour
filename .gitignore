@@ -1,0 +1,10 @@
+tools/bin/
+__pycache__/
+*.pyc
+.venv/
+.env
+data/index/
+data/threads.sqlite
+src/web/static/css/app.css
+.pytest_cache/
+data/threads.sqlite-*

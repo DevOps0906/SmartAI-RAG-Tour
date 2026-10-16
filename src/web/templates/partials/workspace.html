@@ -1,0 +1,7 @@
+{#- 작업실 교체 응답 (HTMX). 본문은 #board-root 의 새 내용(여행 요약 바 + 보드)이고, 나머지는 OOB 로 함께 바뀐다:
+    페이지 제목, 챗봇 대화 스레드, 챗봇 thread 정보. 위젯의 열림 상태와 입력창은 그대로 둔다.
+    입력: board_context 값 + thread_id, empty, autostart, offline, messages, examples, text, debug -#}
+{% include "partials/board.html" %}
+<h1 id="page-title" hx-swap-oob="outerHTML" class="truncate text-base font-semibold leading-6 text-text">{{ header_title }}</h1>
+<div id="thread" hx-swap-oob="innerHTML">{% include "partials/thread_body.html" %}</div>
+{% with oob = True %}{% include "partials/chat_session.html" %}{% endwith %}

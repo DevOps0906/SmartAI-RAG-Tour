@@ -1,0 +1,9 @@
+{#- skeleton(lines=3) — 로딩 자리표시. 마지막 줄은 짧게. -#}
+{% macro skeleton(lines=3) -%}
+<div class="space-y-3" role="status" aria-live="polite">
+  {%- for i in range(lines) %}
+  <div class="skeleton-bar h-4 {{ 'w-2/3' if loop.last and lines > 1 else 'w-full' }}"></div>
+  {%- endfor %}
+  <span class="sr-only">불러오는 중</span>
+</div>
+{%- endmacro %}

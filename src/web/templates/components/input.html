@@ -1,0 +1,14 @@
+{#- chat_input(placeholder, attrs, name) — textarea + 전송 버튼. Enter 전송 / Shift+Enter 줄바꿈 (키 동작은 페이지 JS/HTMX 에서 연결).
+    attrs: <form> 에 붙는 hx-post 등 신뢰된 속성. -#}
+{% from "components/button.html" import button %}
+{% macro chat_input(placeholder="여행에 대해 물어보세요", attrs="", name="message") -%}
+<form class="space-y-1.5" {{ attrs|safe }}>
+  <div class="flex items-end gap-2 rounded-card border border-border bg-surface p-2 focus-within:border-accent">
+    <label for="chat-{{ name }}" class="sr-only">메시지 입력</label>
+    <textarea id="chat-{{ name }}" name="{{ name }}" rows="1" placeholder="{{ placeholder }}"
+      class="min-h-10 max-h-40 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-6 text-text placeholder:text-text-muted focus-visible:outline-none"></textarea>
+    {{ button("보내기", variant="primary", size="md", icon="send", type="submit") }}
+  </div>
+  <p class="text-xs leading-4 text-text-muted">Enter로 전송, Shift+Enter로 줄바꿈</p>
+</form>
+{%- endmacro %}

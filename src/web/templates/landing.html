@@ -1,0 +1,169 @@
+{#- 메인 랜딩 (GET /). 입력: slides, courses, destinations, nav_active, contained, 모달 값(today, max_days, max_places, debug).
+    색은 도시별 토큰(--color-dest-*)만 쓴다. Tailwind 가 클래스를 찾도록 도시별 클래스는 아래 사전에 전체 이름으로 적는다. -#}
+{% extends "document.html" %}
+{% from "illustrations/_all.html" import media, illustration %}
+{% from "components/button.html" import button %}
+{% from "components/_icons.html" import icon %}
+{% set soft = {"tokyo": "bg-dest-tokyo-soft", "paris": "bg-dest-paris-soft", "bangkok": "bg-dest-bangkok-soft", "newyork": "bg-dest-newyork-soft", "jeju": "bg-dest-jeju-soft"} %}
+{% set sky = {"tokyo": "bg-dest-tokyo-sky", "paris": "bg-dest-paris-sky", "bangkok": "bg-dest-bangkok-sky", "newyork": "bg-dest-newyork-sky", "jeju": "bg-dest-jeju-sky"} %}
+{% block title %}여행 계획, 한 번에{% endblock %}
+{% block head_extra %}<script src="/static/js/landing.js?v={{ asset_v('js/landing.js') }}" defer></script>{% endblock %}
+{% block body_class %}min-h-dvh{% endblock %}
+
+{% block body %}
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-surface focus:px-3 focus:py-2">본문으로 건너뛰기</a>
+{% include "partials/gnb.html" %}
+
+<main id="main" tabindex="-1">
+  <h1 class="sr-only">스마트 여행 비서 - 여행 계획을 한 번에</h1>
+
+  {# ---------- 히어로 슬라이더 ---------- #}
+  <section id="hero" aria-roledescription="carousel" aria-label="추천 여행지" class="relative border-b border-border">
+    <div data-track aria-live="off">
+      {%- for s in slides %}
+      <div data-slide data-active="{{ 'true' if loop.first else 'false' }}" role="group" aria-roledescription="slide" aria-label="{{ loop.index }} / {{ slides|length }}"
+        class="hidden data-[active=true]:block {{ soft[s.dest] }}">
+        <div class="mx-auto grid max-w-7xl items-center gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:gap-10 lg:py-12">
+          <div class="order-2 min-w-0 pb-16 lg:order-1 lg:pb-20">
+            <p class="mb-3 text-sm font-medium leading-5 text-text-muted">{{ s.country }} · {{ s.dest_ko }}</p>
+            <h2 class="break-keep text-3xl font-bold leading-tight text-text sm:text-4xl lg:text-5xl">
+              {%- for line in s.headline_lines %}<span class="block">{{ line }}</span>{% endfor -%}
+            </h2>
+            <p class="mt-4 max-w-md break-keep text-base leading-7 text-text-muted">{{ s.desc }}</p>
+            <ul class="mt-4 flex flex-wrap gap-2" aria-label="해시태그">
+              {%- for t in s.tags %}<li class="inline-flex h-7 items-center rounded-pill bg-surface px-3 text-sm leading-5 text-text">{{ t }}</li>{% endfor %}
+            </ul>
+            <div class="mt-6 flex flex-wrap items-center gap-3">
+              {{ button("이 여행지로 계획하기", variant="primary", size="lg", icon="sparkle", attrs='data-plan-dest="' ~ s.dest ~ '"') }}
+              <a href="#popular" class="inline-flex h-12 items-center justify-center gap-2 rounded-control border border-border bg-surface px-5 text-base font-medium leading-6 text-text transition-colors hover:bg-surface-muted">인기 코스 보기</a>
+            </div>
+          </div>
+          <div class="order-1 h-52 min-w-0 overflow-hidden rounded-card border border-border sm:h-72 lg:order-2 lg:h-[26rem] {{ sky[s.dest] }}">
+            {{ media(s, "h-full w-full") }}
+          </div>
+        </div>
+      </div>
+      {%- endfor %}
+    </div>
+
+    <div class="pointer-events-none absolute inset-x-0 bottom-3 sm:bottom-4">
+      <div class="mx-auto flex max-w-7xl items-center gap-2 px-4 sm:gap-3 sm:px-6">
+        <button type="button" data-prev aria-label="이전 슬라이드" class="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-pill border border-border bg-surface text-text transition-colors hover:border-accent">{{ icon("chevron-left", "h-5 w-5") }}</button>
+        <button type="button" data-next aria-label="다음 슬라이드" class="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-pill border border-border bg-surface text-text transition-colors hover:border-accent">{{ icon("chevron", "h-5 w-5") }}</button>
+        <div class="pointer-events-auto flex items-center rounded-pill border border-border bg-surface px-1" role="group" aria-label="슬라이드 선택">
+          {%- for s in slides %}
+          <button type="button" data-dot="{{ loop.index0 }}" aria-label="{{ loop.index }}번째 슬라이드로 이동: {{ s.dest_ko }}"{% if loop.first %} aria-current="true"{% endif %}
+            class="group/dot inline-flex h-9 w-6 items-center justify-center sm:w-7"><span class="h-2.5 w-2.5 rounded-pill bg-text-muted transition-all group-aria-[current=true]/dot:w-5 group-aria-[current=true]/dot:bg-accent"></span></button>
+          {%- endfor %}
+        </div>
+        <button type="button" data-carousel-toggle data-paused="false" aria-label="자동 넘김 멈춤" class="group/tg pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-pill border border-border bg-surface text-text transition-colors hover:border-accent">
+          <span class="group-data-[paused=true]/tg:hidden">{{ icon("pause", "h-4 w-4") }}</span><span class="hidden group-data-[paused=true]/tg:inline">{{ icon("play", "h-4 w-4") }}</span>
+        </button>
+        <p data-counter class="num pointer-events-auto rounded-pill bg-surface px-3 py-1 text-xs leading-4 text-text-muted" aria-hidden="true">1 / {{ slides|length }}</p>
+      </div>
+    </div>
+  </section>
+
+  {# ---------- 내 여행 계획 (이 기기의 localStorage 저장본. 있을 때만 보인다. 렌더: landing.js) ---------- #}
+  <section id="my-plans" hidden aria-labelledby="my-plans-title" class="scroll-mt-20 border-b border-border py-10">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6">
+      <h2 id="my-plans-title" class="text-2xl font-bold leading-8 text-text sm:text-3xl sm:leading-10">내 여행 계획</h2>
+      <p class="mt-1 text-base leading-7 text-text-muted">이 기기에 저장된 최근 계획이에요.</p>
+      <ul data-my-plans class="mt-5 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4"></ul>
+    </div>
+    <template id="my-plan-card">
+      <li class="min-w-0">
+        <article class="relative flex h-full flex-col gap-2 rounded-card border border-border bg-surface p-4 transition-colors hover:border-accent has-[:focus-visible]:border-accent">
+          <h3 class="break-keep text-base font-semibold leading-6 text-text"><a data-plan-link href="/planner" class="after:absolute after:inset-0"><span data-summary></span></a></h3>
+          <ul data-places class="flex flex-wrap gap-1.5" aria-label="선택한 장소"></ul>
+          <p class="num mt-auto text-xs leading-4 text-text-muted">저장 <time data-saved></time></p>
+          <button type="button" data-action="delete-local-plan" data-thread-id="" class="relative z-10 inline-flex h-8 items-center justify-center self-start rounded-control px-2 text-xs font-medium leading-4 text-text-muted hover:bg-surface-muted hover:text-text">이 기기에서 삭제</button>
+        </article>
+      </li>
+    </template>
+    <template id="my-plan-chip"><li class="inline-flex h-6 items-center rounded-pill bg-accent-soft px-2.5 text-xs font-medium leading-4 text-accent"></li></template>
+  </section>
+
+  {# ---------- 인기 코스 ---------- #}
+  <section id="popular" aria-labelledby="popular-title" class="scroll-mt-20 py-12 lg:py-16">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6">
+      <h2 id="popular-title" class="text-2xl font-bold leading-8 text-text sm:text-3xl sm:leading-10">지금 인기 있는 코스</h2>
+      <p class="mt-1 text-base leading-7 text-text-muted">가이드에 담긴 명소로 바로 계획을 만들어 보세요.</p>
+      <ul class="mt-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
+        {%- for c in courses %}
+        <li class="min-w-0">
+          <article data-course="{{ c.id }}" class="relative flex h-full flex-col overflow-hidden rounded-card border border-border bg-surface transition-colors hover:border-accent has-[:focus-visible]:border-accent">
+            <div class="relative aspect-[4/3] w-full overflow-hidden {{ sky[c.dest] }}">
+              {{ media(c, "h-full w-full") }}
+              <span class="absolute left-2 top-2 inline-flex h-6 items-center rounded-pill bg-surface px-2.5 text-xs font-medium leading-4 text-text">{{ c.country }}</span>
+            </div>
+            <div class="flex flex-1 flex-col gap-1.5 p-3">
+              <h3 class="break-keep text-sm font-semibold leading-5 text-text sm:text-base sm:leading-6">
+                <button type="button" data-plan-dest="{{ c.dest }}" data-plan-days="{{ c.days }}" data-plan-places="{{ c.places|join('|') }}" class="text-left after:absolute after:inset-0">{{ c.title }}</button>
+              </h3>
+              <p class="truncate text-xs leading-5 text-text-muted">{{ c.tags|join(" ") }}</p>
+              <p class="mt-auto pt-1 text-sm font-semibold leading-5 text-text">1인 예상 경비 <span class="num">{{ c.cost_label }}</span></p>
+              <p class="text-xs leading-4 text-text-muted" title="{{ c.cost_basis }}">참고용 · 항공 제외</p>
+            </div>
+          </article>
+        </li>
+        {%- endfor %}
+      </ul>
+    </div>
+  </section>
+
+  {# ---------- 여행지 둘러보기 ---------- #}
+  <section id="explore" aria-labelledby="explore-title" class="scroll-mt-20 border-y border-border bg-surface-muted py-12 lg:py-16">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6">
+      <h2 id="explore-title" class="text-2xl font-bold leading-8 text-text sm:text-3xl sm:leading-10">여행지 둘러보기</h2>
+      <p class="mt-1 text-base leading-7 text-text-muted">지금 계획할 수 있는 다섯 곳이에요.</p>
+      <ul class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
+        {%- for d in destinations %}
+        <li class="min-w-0 max-sm:last:col-span-2">
+          <button type="button" data-plan-dest="{{ d.key }}" class="flex h-full w-full flex-col overflow-hidden rounded-card border border-border bg-surface text-left transition-colors hover:border-accent">
+            <span class="block h-28 w-full overflow-hidden {{ sky[d.key] }}">{{ illustration(d.key, "h-full w-full") }}</span>
+            <span class="flex flex-col gap-0.5 p-3">
+              <span class="text-base font-semibold leading-6 text-text">{{ d.ko }}</span>
+              <span class="text-xs leading-4 text-text-muted">{{ d.country }}</span>
+              <span class="break-keep text-xs leading-5 text-text-muted">{{ d.intro }}</span>
+            </span>
+          </button>
+        </li>
+        {%- endfor %}
+      </ul>
+    </div>
+  </section>
+
+  {# ---------- 이렇게 계획해요 ---------- #}
+  <section id="how" aria-labelledby="how-title" class="scroll-mt-20 py-12 lg:py-16">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6">
+      <h2 id="how-title" class="text-2xl font-bold leading-8 text-text sm:text-3xl sm:leading-10">이렇게 계획해요</h2>
+      <ol class="mt-6 grid gap-3 sm:grid-cols-3 sm:gap-4">
+        {%- for n, title, body in [
+          (1, "여행지 선택", "도쿄, 파리, 방콕, 뉴욕, 제주 중에서 가고 싶은 곳을 골라요."),
+          (2, "일수와 장소", "출발일과 1~5일 일정을 정하고, 가이드의 주요 명소에서 가고 싶은 곳을 담아요."),
+          (3, "AI 비서와 상세 대화", "계획 보드에서 날씨, 환율, 일정을 확인하고 비서와 대화하며 다듬어요.")] %}
+        <li class="rounded-card border border-border bg-surface p-4">
+          <span class="num inline-flex h-8 w-8 items-center justify-center rounded-pill bg-accent text-sm font-semibold text-accent-fg">{{ n }}</span>
+          <h3 class="mt-3 text-base font-semibold leading-6 text-text">{{ title }}</h3>
+          <p class="mt-1 break-keep text-sm leading-6 text-text-muted">{{ body }}</p>
+        </li>
+        {%- endfor %}
+      </ol>
+      <div class="mt-6">{{ button("새 여행 계획 시작하기", variant="primary", size="lg", icon="plus", attrs='data-action="new-plan"') }}</div>
+    </div>
+  </section>
+</main>
+
+<footer class="border-t border-border bg-surface py-8">
+  <div class="mx-auto flex max-w-7xl flex-col gap-3 px-4 text-sm leading-6 text-text-muted sm:px-6">
+    <p class="inline-flex items-center gap-2 font-semibold text-text">{{ icon("sparkle", "h-4 w-4 text-accent") }}스마트 여행 비서</p>
+    <p class="break-keep">여행지 가이드, 날씨, 환율을 한 화면에 모아 AI 비서와 여행 계획을 다듬는 도구예요.</p>
+    <p class="break-keep">가이드 정보는 2026년 기준 참고용이에요. 경비와 운영 정보는 방문 전에 다시 확인해 주세요.</p>
+    <p class="text-xs leading-5">LangGraph 기반 여행 비서 에이전트 실습 과제</p>
+  </div>
+</footer>
+
+{% include "partials/plan_modal.html" %}
+{% include "partials/confirm_delete.html" %}
+{% endblock %}

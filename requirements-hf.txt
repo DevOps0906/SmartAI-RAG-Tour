@@ -1,0 +1,4 @@
+# optional: local multilingual embeddings (EMBEDDING_PROVIDER=huggingface), heavy (torch)
+-r requirements.txt
+langchain-huggingface>=0.1.2
+sentence-transformers>=3.0

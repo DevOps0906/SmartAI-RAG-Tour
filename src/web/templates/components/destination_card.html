@@ -1,0 +1,37 @@
+{#- destination_card(d, selected=False, compact=False): 여행지 선택 카드(button). 누르면 챗봇을 열고 "{도시} 날씨, 환율, 일정 알려줘" 를 바로 전송(data-ask).
+    selected 면 aria-pressed="true" + accent 테두리 + accent-soft 배경 + 체크 아이콘과 "선택됨" 글자(색만으로 표시하지 않음).
+    compact(말풍선용)는 소개 문구와 선택 표시를 생략한다.
+    destination_grid(items, selected=None, compact=False): 카드 격자. 보드는 모바일 2열 / sm 3열 / lg 5열. -#}
+{% from "components/_icons.html" import icon as _icon %}
+{% macro destination_card(d, selected=False, compact=False) -%}
+<button type="button" data-ask="{{ d.ko }} 날씨, 환율, 일정 알려줘"{% if not compact %} aria-pressed="{{ 'true' if selected else 'false' }}"{% endif %}
+  class="flex w-full min-w-0 flex-col items-start gap-1 rounded-card border text-left transition-colors {{ 'px-3 py-2' if compact else 'min-h-24 p-3' }} {{ 'border-accent bg-accent-soft' if selected else 'border-border bg-surface hover:border-accent' }}">
+  <span class="flex w-full items-center justify-between gap-2">
+    <span class="truncate text-sm font-semibold leading-5 text-text">{{ d.ko }}</span>
+    {%- if selected and not compact %}<span class="inline-flex shrink-0 items-center gap-0.5 text-xs font-medium leading-4 text-accent">{{ _icon("check", "h-3 w-3") }}선택됨</span>{% endif %}
+  </span>
+  <span class="text-xs leading-4 text-text-muted">{{ d.country }} · {{ d.currency }}</span>
+  {%- if not compact %}<span class="text-xs leading-4 text-text-muted">{{ d.intro }}</span>{% endif %}
+</button>
+{%- endmacro %}
+{% macro destination_grid(items, selected=None, compact=False) -%}
+<div class="grid gap-2 {{ 'grid-cols-2' if compact else 'grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5' }}" role="group" aria-label="여행지 선택">
+  {%- for d in items %}{{ destination_card(d, selected=(d.key == selected), compact=compact) }}{% endfor %}
+</div>
+{%- endmacro %}
+{#- destination_radio(d, selected=False): 모달용 라디오 카드. 숨긴 radio + 라벨 카드. 선택은 테두리·배경 + 체크 아이콘 + "선택됨" 글자로 표시한다.
+    고르면 hx-get 으로 그 도시의 장소 칩을 #places-chips 에 불러온다. -#}
+{% macro destination_radio(d, selected=False) -%}
+<label class="relative block min-w-0 cursor-pointer">
+  <input type="radio" name="destination" value="{{ d.key }}" class="peer sr-only" required{% if selected %} checked{% endif %}
+    hx-get="/places?city={{ d.key }}" hx-trigger="change" hx-target="#places-chips" hx-swap="innerHTML">
+  <span class="flex min-h-24 w-full flex-col items-start gap-1 rounded-card border border-border bg-surface p-3 text-left transition-colors hover:border-accent peer-checked:border-accent peer-checked:bg-accent-soft peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus [&_.sel]:hidden peer-checked:[&_.sel]:inline-flex">
+    <span class="flex w-full items-center justify-between gap-2">
+      <span class="truncate text-sm font-semibold leading-5 text-text">{{ d.ko }}</span>
+      <span class="sel shrink-0 items-center gap-0.5 text-xs font-medium leading-4 text-accent">{{ _icon("check", "h-3 w-3") }}선택됨</span>
+    </span>
+    <span class="text-xs leading-4 text-text-muted">{{ d.country }} · {{ d.currency }}</span>
+    <span class="text-xs leading-4 text-text-muted">{{ d.intro }}</span>
+  </span>
+</label>
+{%- endmacro %}

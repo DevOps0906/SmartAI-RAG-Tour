@@ -1,0 +1,10 @@
+{#- GET /search?q= 응답. 입력: q, empty, dest{key, ko}, unsupported[표시명], names[지원 여행지 한글명].
+    지원 도시: 화면에 보이지 않는 표식(data-search-open)만 돌려주고, app.js 가 그 도시가 선택된 계획 모달을 연다. -#}
+{%- if dest -%}
+<span hidden data-search-open data-plan-dest="{{ dest.key }}">{{ dest.ko }}</span>
+{%- elif empty -%}
+<p class="text-text-muted">여행지 이름이나 별칭을 입력해 주세요. 선택 가능: {{ names|join(", ") }}</p>
+{%- else -%}
+<p>아직 준비 중인 여행지예요. 선택 가능: {{ names|join(", ") }}</p>
+{%- if unsupported %}<p class="mt-1 text-xs leading-5 text-text-muted">{{ unsupported|join(", ") }}의 정보는 아직 없어요.</p>{% endif -%}
+{%- endif -%}

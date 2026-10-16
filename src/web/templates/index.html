@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "components/message.html" import message %}
+{% from "components/input.html" import chat_input %}
+{% from "components/_icons.html" import icon %}
+
+{% block title %}{{ header_title }}{% endblock %}
+{% block page_title %}{{ header_title }}{% endblock %}
+
+{% block board %}
+{% include "partials/board.html" %}
+{% endblock %}
+
+{% block widget %}
+{% include "partials/plan_modal.html" %}
+{% include "partials/confirm_delete.html" %}
+{# 플로팅 챗봇 위젯: 오른쪽 아래 FAB + 대화창. 640px 미만에서는 전체 화면 시트 #}
+<button type="button" id="chat-fab" data-action="toggle-chat" aria-label="AI 여행 비서 열기" aria-expanded="false" aria-controls="chat-widget"
+  class="group/fab fixed bottom-4 right-4 z-30 inline-flex h-14 w-14 items-center justify-center rounded-pill bg-accent text-accent-fg transition-colors hover:bg-accent-hover sm:bottom-6 sm:right-6">
+  <span class="group-aria-expanded/fab:hidden">{{ icon("chat", "h-6 w-6") }}</span>
+  <span class="hidden group-aria-expanded/fab:inline">{{ icon("x", "h-6 w-6") }}</span>
+  <span id="chat-dot" class="absolute right-0 top-0 hidden h-3.5 w-3.5 rounded-pill border-2 border-surface bg-danger"><span class="sr-only">새 답변</span></span>
+</button>
+
+<section id="chat-widget" role="dialog" aria-label="AI 여행 비서" data-open="false"
+  class="fixed inset-0 z-40 hidden min-h-0 flex-col bg-surface data-[open=true]:flex sm:inset-auto sm:bottom-24 sm:right-6 sm:h-[min(40rem,calc(100dvh-7rem))] sm:w-96 sm:rounded-card sm:border sm:border-border">
+  <header class="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
+    <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-accent-soft text-text" aria-hidden="true">{{ icon("sparkle", "h-5 w-5") }}</span>
+    <div class="min-w-0 flex-1">
+      <h2 class="truncate text-sm font-semibold leading-5 text-text">AI 여행 비서</h2>
+      <p id="chat-status" class="truncate text-xs leading-4 text-text-muted" aria-live="polite">대기 중</p>
+    </div>
+    <button type="button" data-action="close-chat" class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-control text-text-muted hover:bg-surface-muted hover:text-text" aria-label="대화창 닫기" title="닫기">{{ icon("x", "h-5 w-5") }}</button>
+  </header>
+  <div id="thread" class="min-h-0 flex-1 space-y-3 overflow-y-auto p-4" role="log" aria-label="대화 내용">
+    {%- include "partials/thread_body.html" %}
+  </div>
+  <div class="shrink-0 border-t border-border p-3">
+    {{ chat_input(placeholder="여행에 대해 무엇이든 물어보세요", attrs='id="chat-form" hx-post="/chat" hx-target="#thread" hx-swap="beforeend"') }}
+    {# 대화의 thread 정보. 위젯이 닫혀 있어도(display:none) 입력값과 스트림 연결은 그대로 유지된다 #}
+    {% include "partials/chat_session.html" %}
+  </div>
+</section>
+{% endblock %}

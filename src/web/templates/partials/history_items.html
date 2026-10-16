@@ -1,0 +1,34 @@
+{#- 내 여행 기록 항목(li). items: [{thread_id,title,kind,summary,places,ts,updated_at,group_start}], thread_id: 지금 보는 thread, debug,
+    next_offset: 더 있으면 다음 시작 위치. 항목을 누르면 페이지 이동 없이 작업실이 그 기록으로 교체된다(hx-push-url). -#}
+{% from "components/_icons.html" import icon %}
+{%- for t in items %}
+{%- if t.group_start == "trip" %}<li data-group="trip" role="presentation" class="px-3 pb-1 pt-3 text-xs font-medium leading-4 text-text-muted">여행 계획</li>{% endif %}
+{%- if t.group_start == "chat" %}<li data-group="chat" role="presentation" class="px-3 pb-1 pt-4 text-xs font-medium leading-4 text-text-muted">대화</li>{% endif %}
+{%- set url = "/planner?thread_id=" ~ t.thread_id ~ ("&debug=1" if debug else "") %}
+{%- set label = t.summary if t.kind == "trip" else t.title %}
+<li data-kind="{{ t.kind }}" data-thread-id="{{ t.thread_id }}" data-ts="{{ t.ts }}" class="relative">
+  <a href="{{ url }}" hx-get="{{ url }}" hx-target="#board-root" hx-swap="innerHTML" hx-push-url="true" data-history-link{% if t.thread_id == thread_id %} aria-current="page"{% endif %}
+    class="flex flex-col gap-1 rounded-control border-l-2 border-transparent py-2 pl-3 pr-11 text-sm leading-5 text-text-muted hover:bg-surface-muted aria-[current=page]:border-accent aria-[current=page]:bg-surface-muted aria-[current=page]:text-text">
+    <span class="truncate font-medium{{ ' text-text' if t.kind == 'trip' }}">{{ label }}</span>
+    {%- if t.kind == "trip" %}
+    <span class="flex flex-wrap gap-1" aria-label="장소">
+      {%- for p in t.places %}<span class="inline-flex h-5 max-w-full items-center truncate rounded-pill bg-accent-soft px-2 text-xs leading-4 text-accent">{{ p }}</span>{% endfor %}
+      {%- if not t.places %}<span class="inline-flex h-5 items-center rounded-pill bg-surface-muted px-2 text-xs leading-4 text-text-muted">AI 추천</span>{% endif %}
+    </span>
+    {%- endif %}
+    <span class="num text-xs leading-4 text-text-muted"><time datetime="{{ t.ts }}">{{ t.updated_at }}</time> 생성</span>
+  </a>
+  <button type="button" data-action="history-menu" aria-haspopup="true" aria-expanded="false" aria-label="{{ label }} 기록 메뉴"
+    class="absolute right-1 top-1.5 inline-flex h-9 w-9 items-center justify-center rounded-control text-text-muted hover:bg-surface hover:text-text">{{ icon("more", "h-4 w-4") }}</button>
+  <div role="menu" hidden class="absolute right-1 top-11 z-10 w-40 rounded-card border border-border bg-surface p-1">
+    <button type="button" role="menuitem" data-action="history-delete" data-thread-id="{{ t.thread_id }}" data-label="{{ label }}"
+      class="flex h-10 w-full items-center rounded-control px-3 text-left text-sm text-danger hover:bg-surface-muted">기록에서 삭제</button>
+  </div>
+</li>
+{%- endfor %}
+{%- if next_offset %}
+<li id="history-more" class="px-1 pt-2">
+  <button type="button" hx-get="/threads?offset={{ next_offset }}{% if thread_id %}&amp;thread_id={{ thread_id }}{% endif %}{% if debug %}&amp;debug=1{% endif %}" hx-target="#history-more" hx-swap="outerHTML"
+    class="flex h-10 w-full items-center justify-center rounded-control border border-border text-sm font-medium text-text hover:bg-surface-muted">더 보기 ({{ remaining }}개)</button>
+</li>
+{%- endif %}

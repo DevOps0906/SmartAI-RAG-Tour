@@ -1,0 +1,32 @@
+{#- 날씨 카드. 입력: fresh(새 데이터 1회 강조), s(State), ent, loading, oob -#}
+{% from "components/card.html" import card %}
+{% from "components/badge.html" import badge %}
+{% from "components/chip.html" import example_chip %}
+{% from "components/button.html" import button %}
+{% from "components/stat.html" import stat %}
+{% set w = s.weather %}
+<div id="board-weather" class="min-w-0{% if fresh %} board-fresh{% endif %}"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+{%- if loading %}
+  {% call card("날씨", subtitle="불러오는 중", state="loading") %}{% endcall %}
+{%- elif not w %}
+  {% set act %}{{ example_chip("도쿄 날씨 알려줘", 'data-fill="도쿄 날씨 알려줘"') }}{% endset %}
+  {% call card("날씨", state="empty", message="도시를 알려 주시면 날씨를 보여드려요.", action=act) %}{% endcall %}
+{%- elif not w.ok %}
+  {% set act %}{{ button("다시 시도", variant="secondary", size="sm", attrs='data-action="retry"') }}{% endset %}
+  {% call card("날씨", state="error", message="날씨를 가져오지 못했어요. 도시를 확인하고 다시 시도해 주세요.", action=act) %}{% endcall %}
+{%- else %}
+  {% set b %}<span title="{{ '실시간 조회에 실패해 예시 데이터로 보여드려요.' if w.source == 'mock' else '실시간 데이터예요.' }}">{{ badge('예시 데이터', 'warning') if w.source == 'mock' else badge('실시간', 'success') }}</span>{% endset %}
+  {% call card("날씨", subtitle=w.city_ko ~ " · 섭씨", badge=b) %}
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      {{ stat("현재 기온", (w.temp_c|round|int) ~ "°") }}
+      <dl class="min-w-36 space-y-1 text-sm leading-5">
+        <div class="flex justify-between gap-4"><dt class="text-text-muted">체감</dt><dd class="num text-right text-text">{{ w.feels_like_c|round|int }}°</dd></div>
+        <div class="flex justify-between gap-4"><dt class="text-text-muted">습도</dt><dd class="num text-right text-text">{{ w.humidity }}%</dd></div>
+        <div class="flex justify-between gap-4"><dt class="text-text-muted">상태</dt><dd class="text-right text-text">{{ w.condition }}</dd></div>
+      </dl>
+    </div>
+    <p class="mt-3 text-sm leading-5 text-text">{{ w.advice }}</p>
+    <p class="num mt-1 text-xs leading-4 text-text-muted">{{ w.date }} 기준</p>
+  {% endcall %}
+{%- endif %}
+</div>

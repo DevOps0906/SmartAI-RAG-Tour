@@ -1,0 +1,6 @@
+{#- 챗봇 대화의 현재 thread 정보(화면에 보이지 않음). 작업실이 교체될 때 OOB 로 함께 바뀐다. 입력: thread_id, empty, autostart, offline, debug, oob
+    thread_id/debug 입력은 챗봇 폼(#chat-form)에 form 속성으로 붙는다. 동작: static/js/app.js (syncSession) -#}
+<div id="chat-session" hidden data-thread="{{ thread_id }}" data-empty="{{ 'true' if empty else 'false' }}" data-autostart="{{ 'true' if autostart else 'false' }}" data-offline="{{ 'true' if offline else 'false' }}"{% if oob %} hx-swap-oob="true"{% endif %}>
+  <input type="hidden" name="thread_id" value="{{ thread_id }}" form="chat-form">
+  {%- if debug %}<input type="hidden" name="debug" value="1" form="chat-form">{% endif %}
+</div>

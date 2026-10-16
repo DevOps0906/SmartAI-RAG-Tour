@@ -1,0 +1,216 @@
+/*
+ * tokens.css — 스마트 여행 비서 디자인 토큰 (Tailwind v4 CSS 우선 문법)
+ * 정답은 이 파일이다. Designs/DESIGN.md 와 다르면 이 파일이 이긴다.
+ * 포인트컬러: 딥 오션 블루 1색 (보라 금지). 그림자 대신 테두리.
+ * 라이트 기본, 다크는 [data-theme="dark"] 로 같은 변수를 재정의한다.
+ */
+
+/* 다크 변형: <html data-theme="dark"> 아래 모든 요소에서 dark: 유틸 사용 가능 */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@theme {
+  /* 면 */
+  --color-bg: #f3f5f8;
+  --color-surface: #ffffff;
+  --color-surface-muted: #eaeef3;
+  --color-border: #e2e6ec;
+
+  /* 글자 */
+  --color-text: #121a24;
+  --color-text-muted: #4a5868;
+
+  /* 포인트 (딥 오션 블루) */
+  --color-accent: #0b6e99;
+  --color-accent-hover: #085879;
+  --color-accent-fg: #ffffff;
+  --color-accent-soft: #e0eff6;
+
+  /* 증감 (브랜드색과 분리: 초록/빨강 계열) */
+  --color-up: #17794a;
+  --color-down: #b8322c;
+
+  /* 상태 */
+  --color-success: #17794a;
+  --color-warning: #8a5200;
+  --color-danger: #b8322c;
+
+  /* 포커스 링 */
+  --color-focus: #0b6e99;
+
+  /* 여행지 일러스트 색 (도시별 5색: soft=글 영역 바탕, sky=그림 바탕, strong=주요 형태, mid=보조, pop=작은 강조) */
+  --color-dest-tokyo-soft: #fbe9e3;
+  --color-dest-tokyo-sky: #f3cfc4;
+  --color-dest-tokyo: #c8452e;
+  --color-dest-tokyo-mid: #2b3a55;
+  --color-dest-tokyo-pop: #f2b134;
+  --color-dest-paris-soft: #e9eef6;
+  --color-dest-paris-sky: #cfdaec;
+  --color-dest-paris: #3d4f73;
+  --color-dest-paris-mid: #9fb2d3;
+  --color-dest-paris-pop: #d98c9b;
+  --color-dest-bangkok-soft: #fdf1d6;
+  --color-dest-bangkok-sky: #f6dc9e;
+  --color-dest-bangkok: #a8731a;
+  --color-dest-bangkok-mid: #2f7d6b;
+  --color-dest-bangkok-pop: #d6453d;
+  --color-dest-newyork-soft: #e6e9ee;
+  --color-dest-newyork-sky: #c9d0db;
+  --color-dest-newyork: #2a3342;
+  --color-dest-newyork-mid: #7c8aa0;
+  --color-dest-newyork-pop: #e9a23b;
+  --color-dest-jeju-soft: #e1f3ec;
+  --color-dest-jeju-sky: #bfe3d6;
+  --color-dest-jeju: #2b6f5a;
+  --color-dest-jeju-mid: #4aa3b8;
+  --color-dest-jeju-pop: #f2862e;
+
+  /* 모서리 */
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-pill: 9999px;
+
+  /* 글꼴 */
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui,
+    sans-serif;
+}
+
+/* 다크 (명시 선택) */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #0c1117;
+  --color-surface: #141b23;
+  --color-surface-muted: #1b242e;
+  --color-border: #27323f;
+  --color-text: #e8edf2;
+  --color-text-muted: #9ca9b8;
+  --color-accent: #4db2e0;
+  --color-accent-hover: #79c7eb;
+  --color-accent-fg: #05212f;
+  --color-accent-soft: #12303f;
+  --color-up: #4cc38a;
+  --color-down: #ff8077;
+  --color-success: #4cc38a;
+  --color-warning: #e9b24c;
+  --color-danger: #ff8077;
+  --color-focus: #79c7eb;
+  --color-dest-tokyo-soft: #2a1b1a;
+  --color-dest-tokyo-sky: #3a2326;
+  --color-dest-tokyo: #ef7a63;
+  --color-dest-tokyo-mid: #9bb0d4;
+  --color-dest-tokyo-pop: #f2c35a;
+  --color-dest-paris-soft: #1a2230;
+  --color-dest-paris-sky: #233049;
+  --color-dest-paris: #9db4e6;
+  --color-dest-paris-mid: #5c78ad;
+  --color-dest-paris-pop: #e8a3b1;
+  --color-dest-bangkok-soft: #2a2314;
+  --color-dest-bangkok-sky: #3a2f17;
+  --color-dest-bangkok: #e0b04f;
+  --color-dest-bangkok-mid: #5cc2a8;
+  --color-dest-bangkok-pop: #ff7a70;
+  --color-dest-newyork-soft: #191e27;
+  --color-dest-newyork-sky: #232b38;
+  --color-dest-newyork: #8da0bd;
+  --color-dest-newyork-mid: #5a6a84;
+  --color-dest-newyork-pop: #f0b95a;
+  --color-dest-jeju-soft: #14241e;
+  --color-dest-jeju-sky: #1b3a30;
+  --color-dest-jeju: #5dc7a0;
+  --color-dest-jeju-mid: #4aa3b8;
+  --color-dest-jeju-pop: #f5a35a;
+}
+
+/* 다크 (OS 설정 따름) — data-theme 이 없을 때만 적용. 값은 위 [data-theme="dark"] 와 항상 같게 유지 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --color-bg: #0c1117;
+    --color-surface: #141b23;
+    --color-surface-muted: #1b242e;
+    --color-border: #27323f;
+    --color-text: #e8edf2;
+    --color-text-muted: #9ca9b8;
+    --color-accent: #4db2e0;
+    --color-accent-hover: #79c7eb;
+    --color-accent-fg: #05212f;
+    --color-accent-soft: #12303f;
+    --color-up: #4cc38a;
+    --color-down: #ff8077;
+    --color-success: #4cc38a;
+    --color-warning: #e9b24c;
+    --color-danger: #ff8077;
+    --color-focus: #79c7eb;
+    --color-dest-tokyo-soft: #2a1b1a;
+    --color-dest-tokyo-sky: #3a2326;
+    --color-dest-tokyo: #ef7a63;
+    --color-dest-tokyo-mid: #9bb0d4;
+    --color-dest-tokyo-pop: #f2c35a;
+    --color-dest-paris-soft: #1a2230;
+    --color-dest-paris-sky: #233049;
+    --color-dest-paris: #9db4e6;
+    --color-dest-paris-mid: #5c78ad;
+    --color-dest-paris-pop: #e8a3b1;
+    --color-dest-bangkok-soft: #2a2314;
+    --color-dest-bangkok-sky: #3a2f17;
+    --color-dest-bangkok: #e0b04f;
+    --color-dest-bangkok-mid: #5cc2a8;
+    --color-dest-bangkok-pop: #ff7a70;
+    --color-dest-newyork-soft: #191e27;
+    --color-dest-newyork-sky: #232b38;
+    --color-dest-newyork: #8da0bd;
+    --color-dest-newyork-mid: #5a6a84;
+    --color-dest-newyork-pop: #f0b95a;
+    --color-dest-jeju-soft: #14241e;
+    --color-dest-jeju-sky: #1b3a30;
+    --color-dest-jeju: #5dc7a0;
+    --color-dest-jeju-mid: #4aa3b8;
+    --color-dest-jeju-pop: #f5a35a;
+  }
+}
+
+/* 라이트 (명시 선택) — 다크 배경 안에 라이트 패널을 나란히 놓는 미리보기(/dev/components)용. 값은 위 @theme 와 항상 같게 유지 */
+[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #f3f5f8;
+  --color-surface: #ffffff;
+  --color-surface-muted: #eaeef3;
+  --color-border: #e2e6ec;
+  --color-text: #121a24;
+  --color-text-muted: #4a5868;
+  --color-accent: #0b6e99;
+  --color-accent-hover: #085879;
+  --color-accent-fg: #ffffff;
+  --color-accent-soft: #e0eff6;
+  --color-up: #17794a;
+  --color-down: #b8322c;
+  --color-success: #17794a;
+  --color-warning: #8a5200;
+  --color-danger: #b8322c;
+  --color-focus: #0b6e99;
+  --color-dest-tokyo-soft: #fbe9e3;
+  --color-dest-tokyo-sky: #f3cfc4;
+  --color-dest-tokyo: #c8452e;
+  --color-dest-tokyo-mid: #2b3a55;
+  --color-dest-tokyo-pop: #f2b134;
+  --color-dest-paris-soft: #e9eef6;
+  --color-dest-paris-sky: #cfdaec;
+  --color-dest-paris: #3d4f73;
+  --color-dest-paris-mid: #9fb2d3;
+  --color-dest-paris-pop: #d98c9b;
+  --color-dest-bangkok-soft: #fdf1d6;
+  --color-dest-bangkok-sky: #f6dc9e;
+  --color-dest-bangkok: #a8731a;
+  --color-dest-bangkok-mid: #2f7d6b;
+  --color-dest-bangkok-pop: #d6453d;
+  --color-dest-newyork-soft: #e6e9ee;
+  --color-dest-newyork-sky: #c9d0db;
+  --color-dest-newyork: #2a3342;
+  --color-dest-newyork-mid: #7c8aa0;
+  --color-dest-newyork-pop: #e9a23b;
+  --color-dest-jeju-soft: #e1f3ec;
+  --color-dest-jeju-sky: #bfe3d6;
+  --color-dest-jeju: #2b6f5a;
+  --color-dest-jeju-mid: #4aa3b8;
+  --color-dest-jeju-pop: #f2862e;
+}

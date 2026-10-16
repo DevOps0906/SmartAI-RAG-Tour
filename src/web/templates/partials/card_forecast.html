@@ -1,0 +1,39 @@
+{#- 여행기간중 날씨현황 카드(계획 보드). 입력: forecast, s.weather(현재 날씨), trip, loading, oob, fresh
+    날짜별 한 줄: 일차·날짜 / 최저·최고(tabular) / 상태 / 강수확률 / 배지(예보·예상 기후·예시). 색만으로 구분하지 않는다. -#}
+{% from "components/card.html" import card %}
+{% from "components/badge.html" import badge %}
+{% set w = s.weather %}
+<div id="board-forecast" class="min-w-0{% if fresh %} board-fresh{% endif %}"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+{%- if loading %}
+  {% call card("여행기간중 날씨현황", subtitle="불러오는 중", state="loading") %}{% endcall %}
+{%- elif not forecast %}
+  {% call card("여행기간중 날씨현황", state="empty", message="여행 기간의 날씨를 가져오고 있어요.") %}{% endcall %}
+{%- else %}
+  {% call card("여행기간중 날씨현황", subtitle=(trip.destination_ko if trip else "") ~ " · 섭씨") %}
+    {%- if w and w.ok %}
+    <p class="mb-3 text-sm leading-5 text-text-muted">현재 <span class="num font-medium text-text">{{ w.temp_c|round|int }}°</span> {{ w.condition }}
+      · {{ '예시 데이터' if w.source == 'mock' else '실시간' }}</p>
+    {%- endif %}
+    <ul class="divide-y divide-border">
+      {%- for f in forecast %}
+      <li class="py-2 text-sm leading-5">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span class="num w-24 shrink-0 font-medium text-text">{{ loop.index }}일차 <span class="font-normal text-text-muted">{{ f.date|md }}</span></span>
+          {%- if f.source == 'climate' %}
+          <span class="text-text-muted">예상 기후</span>
+          <span class="ml-auto">{{ badge("예상 기후", "neutral") }}</span>
+          {%- else %}
+          <span class="num text-text">{{ f.tmin }}° / {{ f.tmax }}°</span>
+          <span class="min-w-0 text-text">{{ f.condition }}</span>
+          {#- f.pop 은 dict.pop 메서드로 해석되므로 반드시 f['pop'] 으로 읽는다 -#}
+          {%- if f['pop'] is not none %}<span class="num text-text-muted">강수 {{ f['pop'] }}%</span>{% endif %}
+          <span class="ml-auto">{{ badge("예시 데이터", "warning") if f.source == 'mock' else badge("예보", "success") }}</span>
+          {%- endif %}
+        </div>
+        {%- if f.source == 'climate' and f.note %}<p class="mt-1 text-xs leading-5 text-text-muted">{{ f.note }}</p>{% endif %}
+      </li>
+      {%- endfor %}
+    </ul>
+  {% endcall %}
+{%- endif %}
+</div>

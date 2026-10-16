@@ -1,0 +1,5 @@
+{#- POST /plan/offline 응답: 브라우저 로컬 저장본으로 다시 그린 읽기 전용 보드(저장된 계획, 오프라인 사본). board_context 값 + readonly, offline -#}
+<div id="offline-board" data-offline="true">
+  {% include "partials/board.html" %}
+  <p class="mt-4 text-xs leading-5 text-text-muted">이 기기에 저장된 사본이에요. 서버에 이 대화가 없어 새 정보는 가져오지 않아요. 계획을 바꾸려면 새 여행 계획을 만들어 주세요.</p>
+</div>

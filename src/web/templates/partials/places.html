@@ -1,0 +1,17 @@
+{#- GET /places?city= : 여행지 가이드 '주요 명소'의 장소 칩(체크박스, 다중 선택). 입력: chips[{name, checked}], message -#}
+{% if message %}
+<p class="text-sm leading-6 text-text-muted">{{ message }}</p>
+{% else %}
+<ul class="flex flex-wrap gap-2" aria-label="추천 장소">
+  {%- for c in chips %}
+  <li>
+    <label class="relative inline-flex cursor-pointer">
+      <input type="checkbox" name="places" value="{{ c.name }}" class="peer sr-only" data-place-chip{% if c.checked %} checked{% endif %}>
+      <span class="inline-flex h-8 items-center gap-1 rounded-pill border border-border bg-surface px-3 text-sm leading-5 text-text transition-colors hover:border-accent peer-checked:border-accent peer-checked:bg-accent-soft peer-checked:text-accent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus [&_.on]:hidden peer-checked:[&_.on]:inline-flex">
+        <span class="on items-center" aria-hidden="true"><svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span>{{ c.name }}
+      </span>
+    </label>
+  </li>
+  {%- endfor %}
+</ul>
+{% endif %}

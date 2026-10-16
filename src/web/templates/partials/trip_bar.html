@@ -1,0 +1,24 @@
+{#- 여행 요약 바. 입력: trip, country, oob. "계획 수정" 은 값이 채워진 모달을 연다. -#}
+{% from "components/badge.html" import badge %}
+{% from "components/button.html" import button %}
+{% set edit_attrs %}data-action="edit-plan" data-destination="{{ trip.destination }}" data-start="{{ trip.start_date }}" data-days="{{ trip.days }}" data-places="{{ trip.places|join('|') }}"{% endset %}
+<section id="board-trip" aria-labelledby="board-trip-title" class="mb-4 rounded-card border border-border bg-surface p-4"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div class="min-w-0">
+      <h2 id="board-trip-title" class="break-keep text-base font-semibold leading-6 text-text">{{ trip.destination_ko }}{% if country %} · {{ country }}{% endif %}</h2>
+      <p class="num text-sm leading-5 text-text-muted">
+        <time datetime="{{ trip.start_date }}">{{ trip.start_date|md_wd }}</time> ~ <time datetime="{{ trip.end_date }}">{{ trip.end_date|md_wd }}</time>
+        · {{ trip.nights }}박 {{ trip.days }}일
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      {%- if offline %}{{ badge("저장된 계획(오프라인 사본)", "warning") }}{% endif %}
+      {%- if not readonly %}{{ button("계획 수정", variant="secondary", size="sm", icon="refresh", attrs=edit_attrs) }}{% endif %}
+      {{ button("이 기기에서 삭제", variant="ghost", size="sm", icon="x", attrs='data-action="delete-local-plan"') }}
+    </div>
+  </div>
+  <div class="mt-3 flex flex-wrap items-center gap-1.5" aria-label="선택한 장소">
+    {%- for p in trip.places %}<span class="inline-flex h-6 items-center rounded-pill bg-accent-soft px-2.5 text-xs leading-4 font-medium text-accent">{{ p }}</span>{% endfor %}
+    {%- if trip.places_auto %}{{ badge("AI 추천", "accent") }}{% elif not trip.places %}<span class="text-xs leading-4 text-text-muted">장소는 AI가 가이드를 바탕으로 추천해요.</span>{% endif %}
+  </div>
+</section>

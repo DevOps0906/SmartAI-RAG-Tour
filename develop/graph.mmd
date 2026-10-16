@@ -1,0 +1,52 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	analyze_input(analyze_input)
+	rag_search(rag_search)
+	weather_tool(weather_tool)
+	exchange_tool(exchange_tool)
+	plan_itinerary(plan_itinerary)
+	clarify(clarify)
+	generate_answer(generate_answer)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> analyze_input;
+	analyze_input -.-> clarify;
+	analyze_input -.-> exchange_tool;
+	analyze_input -.-> generate_answer;
+	analyze_input -.-> plan_itinerary;
+	analyze_input -.-> rag_search;
+	analyze_input -.-> weather_tool;
+	exchange_tool -.-> clarify;
+	exchange_tool -.-> generate_answer;
+	exchange_tool -.-> plan_itinerary;
+	exchange_tool -.-> rag_search;
+	exchange_tool -.-> weather_tool;
+	plan_itinerary -.-> clarify;
+	plan_itinerary -.-> exchange_tool;
+	plan_itinerary -.-> generate_answer;
+	plan_itinerary -.-> rag_search;
+	plan_itinerary -.-> weather_tool;
+	rag_search -.-> clarify;
+	rag_search -.-> exchange_tool;
+	rag_search -.-> generate_answer;
+	rag_search -.-> plan_itinerary;
+	rag_search -.-> weather_tool;
+	weather_tool -.-> clarify;
+	weather_tool -.-> exchange_tool;
+	weather_tool -.-> generate_answer;
+	weather_tool -.-> plan_itinerary;
+	weather_tool -.-> rag_search;
+	clarify --> __end__;
+	generate_answer --> __end__;
+	exchange_tool -.-> exchange_tool;
+	plan_itinerary -.-> plan_itinerary;
+	rag_search -.-> rag_search;
+	weather_tool -.-> weather_tool;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc
+

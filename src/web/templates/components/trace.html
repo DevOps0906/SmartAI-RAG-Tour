@@ -1,0 +1,24 @@
+{#- trace(steps) — steps: [{node, status: pending|running|success|error|fallback, ms}]
+    상태 점 + 상태 텍스트 + 소요 시간(tabular, 오른쪽 정렬). -#}
+{% macro trace(steps) -%}
+{%- set meta = {
+  "pending": ["bg-border", "대기"],
+  "running": ["bg-accent animate-pulse", "실행 중"],
+  "success": ["bg-success", "완료"],
+  "error": ["bg-danger", "오류"],
+  "fallback": ["bg-warning", "예시 데이터"]
+} -%}
+<ol class="divide-y divide-border rounded-control border border-border bg-surface text-sm" aria-label="실행 흐름">
+  {%- for s in steps %}
+  {%- set m = meta[s.status] %}
+  <li class="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-3 py-2 leading-5">
+    <span class="h-2 w-2 shrink-0 rounded-pill {{ m[0] }}" aria-hidden="true"></span>
+    <span class="flex-1 whitespace-nowrap font-mono text-xs text-text">{{ s.node }}</span>
+    <span class="ml-auto flex shrink-0 items-center gap-2">
+      <span class="text-xs text-text-muted">{{ m[1] }}</span>
+      <span class="num w-14 text-right text-xs text-text-muted">{% if s.ms is defined and s.ms is not none %}{{ s.ms }} ms{% else %}—{% endif %}</span>
+    </span>
+  </li>
+  {%- endfor %}
+</ol>
+{%- endmacro %}

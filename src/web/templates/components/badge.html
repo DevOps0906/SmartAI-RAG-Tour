@@ -1,0 +1,14 @@
+{#- badge(text, tone) — tone: neutral|accent|success|warning|danger. 색 + 아이콘 + 텍스트 모두 표시. -#}
+{% from "components/_icons.html" import icon as _icon %}
+{% macro badge(text, tone="neutral") -%}
+{%- set tones = {
+  "neutral": ["bg-surface-muted text-text-muted border-border", "info"],
+  "accent": ["bg-accent-soft text-accent border-transparent", "sparkle"],
+  "success": ["bg-surface-muted text-success border-border", "check"],
+  "warning": ["bg-surface-muted text-warning border-border", "alert"],
+  "danger": ["bg-surface-muted text-danger border-border", "alert"]
+} -%}
+<span class="inline-flex items-center gap-1 rounded-pill border px-2 h-6 text-xs leading-4 font-medium {{ tones[tone][0] }}">
+  {{- _icon(tones[tone][1], "h-3 w-3") }}<span>{{ text }}</span>
+</span>
+{%- endmacro %}

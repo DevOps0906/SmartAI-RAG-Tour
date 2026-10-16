@@ -1,0 +1,26 @@
+{#- 내 여행 기록 패널 본문(#history). items: 서버 thread(여행 계획 먼저, 일반 대화는 "대화" 그룹), server_ids: 서버에 있는 모든 thread_id.
+    이 기기에만 저장된 계획(PlanStore)은 app.js 가 <template> 으로 같은 목록에 끼워 넣는다(thread_id 중복 제거). -#}
+{% from "components/_icons.html" import icon %}
+<div id="history">
+  <ul id="history-list" data-server-ids="{{ server_ids|join(' ') }}" class="space-y-0.5">
+    {%- if not items or items[0].group_start != "trip" %}<li data-group="trip" role="presentation" class="px-3 pb-1 pt-3 text-xs font-medium leading-4 text-text-muted">여행 계획</li>{% endif %}
+    {%- if not trip_count %}<li id="history-empty" class="px-3 py-2 text-sm leading-5 text-text-muted">아직 계획한 여행이 없어요. 새 여행 계획을 만들어 보세요.</li>{% endif %}
+    {% include "partials/history_items.html" %}
+  </ul>
+  <template id="history-local-tpl">
+    <li data-kind="trip" data-local="true" data-thread-id="" data-ts="" class="relative">
+      <a href="/planner" data-history-link data-local-open
+        class="flex flex-col gap-1 rounded-control border-l-2 border-transparent py-2 pl-3 pr-11 text-sm leading-5 text-text-muted hover:bg-surface-muted aria-[current=page]:border-accent aria-[current=page]:bg-surface-muted aria-[current=page]:text-text">
+        <span data-summary class="truncate font-medium text-text"></span>
+        <span data-places class="flex flex-wrap gap-1" aria-label="장소"></span>
+        <span class="num flex flex-wrap items-center gap-1 text-xs leading-4 text-text-muted"><span><time data-time></time> 생성</span><span class="inline-flex h-5 items-center rounded-pill border border-border bg-surface-muted px-2 text-warning">이 기기에 저장된 사본</span></span>
+      </a>
+      <button type="button" data-action="history-menu" aria-haspopup="true" aria-expanded="false" aria-label="기록 메뉴"
+        class="absolute right-1 top-1.5 inline-flex h-9 w-9 items-center justify-center rounded-control text-text-muted hover:bg-surface hover:text-text">{{ icon("more", "h-4 w-4") }}</button>
+      <div role="menu" hidden class="absolute right-1 top-11 z-10 w-40 rounded-card border border-border bg-surface p-1">
+        <button type="button" role="menuitem" data-action="history-delete" data-thread-id="" data-label="" class="flex h-10 w-full items-center rounded-control px-3 text-left text-sm text-danger hover:bg-surface-muted">기록에서 삭제</button>
+      </div>
+    </li>
+  </template>
+  <template id="history-chip-tpl"><span class="inline-flex h-5 max-w-full items-center truncate rounded-pill bg-accent-soft px-2 text-xs leading-4 text-accent"></span></template>
+</div>

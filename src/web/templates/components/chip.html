@@ -1,0 +1,11 @@
+{#- source_chip(city, section): 출처 칩 (예: 도쿄 가이드 · 음식과 맛집). city 는 한글 도시명. 파일명은 화면에 쓰지 않는다. 정보 표시용.
+    example_chip(text, attrs): 예시 질문 버튼 (입력창 채우기 등은 attrs 로 hx-*/data-* 지정). -#}
+{% from "components/_icons.html" import icon as _icon %}
+{% macro source_chip(city, section=None) -%}
+<span class="inline-flex max-w-full items-center gap-1 rounded-pill border border-border bg-surface-muted px-2.5 h-6 text-xs leading-4 text-text-muted">
+  {{- _icon("file", "h-3 w-3") }}<span class="truncate"><span class="font-medium text-text">{{ city }} 가이드</span>{% if section %} · {{ section }}{% endif %}</span>
+</span>
+{%- endmacro %}
+{% macro example_chip(text, attrs="") -%}
+<button type="button" class="inline-flex items-center rounded-pill border border-border bg-surface px-3 h-8 text-sm leading-5 text-text transition-colors hover:border-accent hover:text-accent" {{ attrs|safe }}>{{ text }}</button>
+{%- endmacro %}

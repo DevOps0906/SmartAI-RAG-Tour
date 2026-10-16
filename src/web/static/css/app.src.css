@@ -1,0 +1,132 @@
+/* app.src.css — Tailwind v4 입력 파일. 빌드: tailwindcss -i app.src.css -o app.css */
+@import "tailwindcss";
+@import "./tokens.css";
+
+/* 템플릿 클래스 스캔 (이 파일 기준 상대 경로) */
+@source "../../templates/**/*.html";
+
+/* 데스크톱(1024px 이상) 글자 크기 약 10% 축소 (2026-10-16 사용자 요청).
+   모바일·태블릿은 Tailwind 기본 크기 유지. text-* 유틸리티가 참조하는 토큰만 바꾸므로
+   간격(spacing)과 레이아웃은 그대로다. 가장 작은 글자는 11px. */
+@media (min-width: 1024px) {
+  :root {
+    --text-xs: 0.6875rem;   /* 12px -> 11px */
+    --text-sm: 0.8125rem;   /* 14px -> 13px */
+    --text-base: 0.9rem;    /* 16px -> 14.4px */
+    --text-lg: 1.0125rem;   /* 18px -> 16.2px */
+    --text-xl: 1.125rem;    /* 20px -> 18px */
+    --text-2xl: 1.35rem;    /* 24px -> 21.6px */
+    --text-3xl: 1.6875rem;  /* 30px -> 27px */
+    --text-4xl: 2.025rem;   /* 36px -> 32.4px */
+    --text-5xl: 2.7rem;     /* 48px -> 43.2px */
+  }
+  body {
+    font-size: var(--text-base);
+  }
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* 테두리 기본색은 토큰 */
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-border);
+  }
+
+  /* 키보드 포커스 링 */
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-accent-soft);
+    color: var(--color-text);
+  }
+
+  /* 모션 최소화 */
+  @media (prefers-reduced-motion: reduce) {
+    .board-fresh > section {
+      animation: none;
+    }
+
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* 숫자: 등폭, 오른쪽 정렬이 필요하면 text-right 를 함께 쓴다 */
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* 스켈레톤 펄스 (reduced-motion 에서는 위 규칙으로 사실상 정지) */
+  .skeleton-bar {
+    background-color: var(--color-surface-muted);
+    border-radius: var(--radius-control);
+    animation: skeleton-pulse 1.4s ease-in-out infinite;
+  }
+
+  .spinner {
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 9999px;
+    animation: spinner-rotate 0.8s linear infinite;
+  }
+
+  /* 새 데이터가 도착한 카드 배경을 1회만 강조 (끝 색은 카드 원래 배경) */
+  .board-fresh > section {
+    animation: board-flash 1.2s ease-out 1;
+  }
+
+  /* 봇 타이핑 점 (reduced-motion 에서는 템플릿이 점을 숨기고 텍스트만 보인다) */
+  .typing-dot {
+    display: inline-block;
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 9999px;
+    background-color: var(--color-text-muted);
+    animation: typing-bounce 1.2s ease-in-out infinite;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+  @keyframes typing-bounce {
+    0%, 60%, 100% { opacity: 0.35; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-0.2rem); }
+  }
+
+  @keyframes board-flash {
+    from { background-color: var(--color-accent-soft); }
+  }
+
+  @keyframes skeleton-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  @keyframes spinner-rotate {
+    to { transform: rotate(360deg); }
+  }
+}

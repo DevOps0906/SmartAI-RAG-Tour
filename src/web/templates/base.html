@@ -1,0 +1,48 @@
+{% extends "document.html" %}
+{% from "components/_icons.html" import icon %}
+{% block title %}여행 작업실{% endblock %}
+{% block body_class %}h-dvh overflow-hidden{% endblock %}
+{% block body %}
+<div id="app" data-sidebar="open" class="group/app flex h-dvh flex-col">
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-surface focus:px-3 focus:py-2">본문으로 건너뛰기</a>
+
+  {# 공통 GNB: 랜딩과 같은 partial. 로고를 누르면 랜딩("/")으로 돌아간다 #}
+  {% with nav_active = "planner", contained = False %}{% include "partials/gnb.html" %}{% endwith %}
+
+  <div class="flex min-h-0 flex-1">
+    {# 내 여행 기록 패널: 1024px 이상은 항상 보이는 고정 열, 미만은 "내 여행 기록" 버튼으로 여는 드로어 #}
+    <div id="sidebar-backdrop" class="fixed inset-0 z-30 hidden bg-text/40 lg:hidden" data-action="close-menu" aria-hidden="true"></div>
+    <aside id="sidebar" aria-label="내 여행 기록"
+      class="fixed inset-y-0 left-0 z-40 flex w-80 max-w-full -translate-x-full flex-col border-r border-border bg-surface transition-transform data-[open=true]:translate-x-0 lg:static lg:z-auto lg:w-64 lg:translate-x-0 lg:shrink-0 xl:w-72">
+      <div class="flex h-14 items-center justify-between gap-2 border-b border-border px-4">
+        <h2 class="truncate font-semibold text-text">내 여행 기록</h2>
+        <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-control text-text-muted hover:bg-surface-muted hover:text-text lg:hidden" data-action="close-menu" aria-label="내 여행 기록 닫기">{{ icon("x", "h-4 w-4") }}</button>
+      </div>
+      <div class="px-3 pt-3">
+        <button type="button" data-action="new-plan" class="flex h-10 w-full items-center justify-center gap-2 rounded-control border border-border px-3 text-sm font-medium text-text hover:bg-surface-muted">{{ icon("plus", "h-4 w-4") }}새 여행 계획</button>
+      </div>
+      <nav id="history-nav" aria-label="계획했던 여행" class="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
+        {% include "partials/threads.html" %}
+      </nav>
+    </aside>
+
+    <div class="flex min-w-0 flex-1 flex-col">
+      <div class="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-surface px-3 sm:px-4">
+        <button type="button" class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-control text-text-muted hover:bg-surface-muted hover:text-text lg:hidden" data-action="open-menu" aria-label="내 여행 기록 열기" aria-controls="sidebar" aria-expanded="false">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg>
+        </button>
+        <div class="min-w-0 flex-1">
+          <h1 id="page-title" class="truncate text-base font-semibold leading-6 text-text">{% block page_title %}여행 작업실{% endblock %}</h1>
+          {% block page_subtitle %}{% endblock %}
+        </div>
+      </div>
+
+      {# 작업 영역: 보드가 전체 폭. AI 대화는 오른쪽 아래 플로팅 챗봇 위젯(widget 블록) #}
+      <main id="main" class="min-h-0 min-w-0 flex-1 overflow-y-auto p-4 pb-24 lg:p-6 lg:pb-24" tabindex="-1">
+        <div id="board-root">{% block board %}{% endblock %}</div>
+      </main>
+    </div>
+  </div>
+{% block widget %}{% endblock %}
+</div>
+{% endblock %}

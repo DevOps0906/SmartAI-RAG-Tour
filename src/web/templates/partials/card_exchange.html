@@ -1,0 +1,28 @@
+{#- 환율 카드. 입력: fresh(새 데이터 1회 강조), s(State), ent, loading, oob -#}
+{% from "components/card.html" import card %}
+{% from "components/badge.html" import badge %}
+{% from "components/chip.html" import example_chip %}
+{% from "components/button.html" import button %}
+{% from "components/stat.html" import stat %}
+{% set x = s.exchange %}
+<div id="board-exchange" class="min-w-0{% if fresh %} board-fresh{% endif %}"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+{%- if loading %}
+  {% call card("환율", subtitle="불러오는 중", state="loading") %}{% endcall %}
+{%- elif not x %}
+  {% set act %}{{ example_chip("50만원이면 엔화로 얼마야?", 'data-fill="50만원이면 엔화로 얼마야?"') }}{% endset %}
+  {% call card("환율", state="empty", message="금액과 나라를 알려 주시면 환산해 드려요.", action=act) %}{% endcall %}
+{%- elif not x.ok %}
+  {% set act %}{{ button("다시 입력", variant="secondary", size="sm", attrs='data-action="focus-input"') }}{% endset %}
+  {% call card("환율", state="error", message="금액은 0보다 커야 해요. 금액을 다시 입력해 주세요.", action=act) %}{% endcall %}
+{%- else %}
+  {% set b %}<span title="{{ '실시간 조회에 실패해 고정 환율로 보여드려요.' if x.source == 'mock' else '실시간 환율이에요.' }}">{{ badge('고정 환율', 'warning') if x.source == 'mock' else badge('실시간', 'success') }}</span>{% endset %}
+  {% call card("환율", subtitle=x.base ~ " → " ~ x.target, badge=b) %}
+    {{ stat("환산 결과", x.converted|comma, unit=x.target) }}
+    <dl class="mt-3 space-y-1 text-sm leading-5">
+      <div class="flex justify-between gap-4"><dt class="text-text-muted">입력 금액</dt><dd class="num text-right text-text">{{ x.amount|comma }} {{ x.base }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-text-muted">적용 환율</dt><dd class="num text-right text-text">1 {{ x.target }} = {{ ((1 / x.rate)|round(1)) if x.base == 'KRW' else x.rate }} {{ x.base }}</dd></div>
+    </dl>
+    <p class="mt-2 text-xs leading-4 text-text-muted">참고용이에요. 실제 수수료 별도{% if x.source != 'mock' and x.rate_date|kst %} · <span class="num">{{ x.rate_date|kst }}</span> 기준{% endif %}</p>
+  {% endcall %}
+{%- endif %}
+</div>

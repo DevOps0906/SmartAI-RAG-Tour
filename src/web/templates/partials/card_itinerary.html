@@ -1,0 +1,51 @@
+{#- 일정 카드. 입력: fresh(새 데이터 1회 강조), s(State), ent, itin_days, itin_docs, loading, oob
+    계획(trip)이 있으면 itinerary 를 일차별 날짜와 항목으로, 없으면 가이드 일정 예시(itin_days)를 보여준다. -#}
+{% from "components/card.html" import card %}
+{% from "components/chip.html" import example_chip %}
+<div id="board-itinerary" class="min-w-0{% if fresh %} board-fresh{% endif %}"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+{%- if loading %}
+  {% call card("일정", subtitle="불러오는 중", state="loading") %}{% endcall %}
+{%- elif trip %}
+  {%- if not itinerary %}
+  {% call card("일정", state="empty", message="일정을 구성하고 있어요. 잠시만 기다려 주세요.") %}{% endcall %}
+  {%- else %}
+  {% call card("일정", subtitle=(trip.nights ~ "박 " ~ trip.days ~ "일") ~ " · " ~ trip.destination_ko) %}
+    <ol class="space-y-4">
+      {%- for day in itinerary %}
+      <li id="itin-day-{{ day.day }}" class="grid gap-x-3 gap-y-1 border-t border-border pt-4 first:border-t-0 first:pt-0 sm:grid-cols-[6.5rem_1fr]">
+        <div class="num text-sm leading-5">
+          <p class="font-semibold text-text">{{ day.day }}일차</p>
+          <p class="text-text-muted"><time datetime="{{ day.date }}">{{ day.date|md_wd }}</time></p>
+        </div>
+        <div class="min-w-0 text-sm leading-6">
+          <p class="break-keep font-medium text-text">{{ day.title }}</p>
+          <ul class="mt-1 list-disc space-y-0.5 pl-5 text-text-muted">
+            {%- for it in day['items'] %}<li class="break-words">{{ it }}</li>{% endfor %}
+          </ul>
+          {%- if day.note %}<p class="mt-1 text-xs leading-5 text-text-muted">{{ day.note }}</p>{% endif %}
+          {%- if detail_by_day[day.day] is defined %}
+          <p class="mt-1"><a href="#detail-{{ detail_by_day[day.day] }}" class="text-xs leading-5 font-medium text-accent underline">요청한 정보 보기</a></p>
+          {%- endif %}
+        </div>
+      </li>
+      {%- endfor %}
+    </ol>
+  {% endcall %}
+  {%- endif %}
+{%- elif not itin_days %}
+  {% set act %}{{ example_chip("제주 2박 3일 일정 짜줘", 'data-fill="제주 2박 3일 일정 짜줘"') }}{% endset %}
+  {% call card("일정", state="empty", message="일정을 만들려면 목적지와 기간을 알려 주세요.", action=act) %}{% endcall %}
+{%- else %}
+  {% set d = ent.days or itin_days|length %}
+  {% call card("일정", subtitle=((d - 1) ~ "박 " ~ d ~ "일") ~ " · " ~ (ent.destination_ko or "")) %}
+    <ol class="space-y-3">
+      {%- for day in itin_days %}
+      <li class="grid grid-cols-[3.5rem_1fr] gap-3 text-sm leading-6">
+        <span class="num font-medium text-text">{{ day.label }}</span>
+        <span class="min-w-0 break-words text-text-muted">{{ day.text }}</span>
+      </li>
+      {%- endfor %}
+    </ol>
+  {% endcall %}
+{%- endif %}
+</div>

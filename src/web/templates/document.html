@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %} · 스마트 여행 비서</title>
+  <script>
+    try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="/static/css/app.css?v={{ asset_v('css/app.css') }}">
+  <script src="/static/js/htmx.min.js"></script>
+  <script src="/static/js/htmx-ext-sse.min.js"></script>
+  <script src="/static/js/app.js?v={{ asset_v('js/app.js') }}" defer></script>
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+{% block body %}{% endblock %}
+</body>
+</html>

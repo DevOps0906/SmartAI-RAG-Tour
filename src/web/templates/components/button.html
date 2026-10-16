@@ -1,0 +1,23 @@
+{#- button(label, variant, size, icon, attrs, disabled, loading, type)
+    variant: primary|secondary|ghost|danger / size: sm|md|lg
+    attrs: 개발자가 넣는 신뢰된 속성 문자열(hx-post, id 등). 사용자 입력 금지. -#}
+{% from "components/_icons.html" import icon as _icon %}
+{% macro button(label, variant="primary", size="md", icon=None, attrs="", disabled=False, loading=False, type="button") -%}
+{%- set base = "inline-flex items-center justify-center gap-2 font-medium rounded-control border transition-colors select-none disabled:cursor-not-allowed disabled:opacity-50 aria-busy:cursor-progress" -%}
+{%- set variants = {
+  "primary": "bg-accent text-accent-fg border-transparent hover:bg-accent-hover",
+  "secondary": "bg-surface text-text border-border hover:bg-surface-muted",
+  "ghost": "bg-transparent text-text-muted border-transparent hover:bg-surface-muted hover:text-text",
+  "danger": "bg-surface text-danger border-danger hover:bg-surface-muted"
+} -%}
+{%- set sizes = {
+  "sm": "h-8 px-3 text-sm leading-5",
+  "md": "h-10 px-4 text-sm leading-5",
+  "lg": "h-12 px-5 text-base leading-6"
+} -%}
+<button type="{{ type }}" class="{{ base }} {{ variants[variant] }} {{ sizes[size] }}"
+  {%- if disabled or loading %} disabled{% endif %}{% if loading %} aria-busy="true"{% endif %} {{ attrs|safe }}>
+  {%- if loading %}<span class="spinner h-4 w-4" aria-hidden="true"></span>{% elif icon %}{{ _icon(icon, "h-4 w-4") }}{% endif -%}
+  <span>{{ label }}{% if loading %}<span class="sr-only"> (처리 중)</span>{% endif %}</span>
+</button>
+{%- endmacro %}

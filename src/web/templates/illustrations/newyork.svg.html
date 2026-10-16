@@ -1,0 +1,34 @@
+{#- 뉴욕: 마천루 스카이라인과 택시. 색은 --color-dest-newyork-* 토큰만 쓴다. -#}
+{% macro art(cls="") -%}
+<svg class="{{ cls }}" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+  <rect width="800" height="500" class="fill-dest-newyork-sky"/>
+  <circle cx="140" cy="120" r="50" class="fill-dest-newyork-pop"/>
+  <g class="fill-dest-newyork-mid">
+    <rect x="20" y="250" width="70" height="200"/><rect x="100" y="200" width="60" height="250"/>
+    <rect x="170" y="290" width="70" height="160"/><rect x="560" y="230" width="70" height="220"/>
+    <rect x="640" y="280" width="60" height="170"/><rect x="710" y="210" width="80" height="240"/>
+  </g>
+  <g class="fill-dest-newyork">
+    <rect x="260" y="230" width="110" height="220"/><rect x="278" y="180" width="74" height="52"/>
+    <rect x="292" y="130" width="46" height="52"/><rect x="304" y="92" width="22" height="40"/><rect x="313" y="30" width="4" height="64"/>
+    <rect x="380" y="170" width="70" height="280"/><rect x="460" y="260" width="90" height="190"/><rect x="384" y="150" width="62" height="22"/>
+  </g>
+  <g class="fill-dest-newyork-pop">
+    <rect x="276" y="250" width="10" height="12"/><rect x="304" y="250" width="10" height="12"/><rect x="332" y="250" width="10" height="12"/>
+    <rect x="276" y="300" width="10" height="12"/><rect x="332" y="300" width="10" height="12"/><rect x="304" y="350" width="10" height="12"/>
+    <rect x="396" y="196" width="10" height="12"/><rect x="424" y="196" width="10" height="12"/><rect x="396" y="250" width="10" height="12"/>
+    <rect x="424" y="310" width="10" height="12"/><rect x="396" y="370" width="10" height="12"/>
+    <rect x="480" y="290" width="10" height="12"/><rect x="510" y="330" width="10" height="12"/><rect x="480" y="380" width="10" height="12"/>
+    <rect x="40" y="276" width="10" height="12"/><rect x="62" y="320" width="10" height="12"/><rect x="120" y="230" width="10" height="12"/><rect x="140" y="290" width="10" height="12"/>
+    <rect x="578" y="260" width="10" height="12"/><rect x="730" y="240" width="10" height="12"/><rect x="760" y="300" width="10" height="12"/>
+  </g>
+  <rect x="0" y="450" width="800" height="50" class="fill-dest-newyork"/>
+  <g>
+    <rect x="560" y="428" width="120" height="30" rx="8" class="fill-dest-newyork-pop"/>
+    <rect x="590" y="410" width="60" height="24" rx="6" class="fill-dest-newyork-pop"/>
+    <rect x="600" y="416" width="18" height="14" class="fill-dest-newyork-sky"/><rect x="624" y="416" width="18" height="14" class="fill-dest-newyork-sky"/>
+    <circle cx="588" cy="460" r="12" class="fill-dest-newyork-mid"/><circle cx="652" cy="460" r="12" class="fill-dest-newyork-mid"/>
+  </g>
+  <g class="fill-dest-newyork-sky"><rect x="40" y="474" width="80" height="4"/><rect x="200" y="474" width="80" height="4"/><rect x="360" y="474" width="80" height="4"/></g>
+</svg>
+{%- endmacro %}

@@ -1,0 +1,13 @@
+{#- GNB 검색창. 입력: sid(요소 id 접미사: top|panel). Enter -> GET /search?q= (HTMX 부분 템플릿).
+    지원 도시면 응답의 data-search-open 표식을 JS 가 보고 그 도시가 선택된 계획 모달을 연다. 미지원이면 아래에 안내를 보여 준다. -#}
+{% from "components/_icons.html" import icon %}
+<form role="search" data-gnb-search action="/search" method="get" class="relative w-full"
+  hx-get="/search" hx-target="#search-result-{{ sid }}" hx-swap="innerHTML" hx-trigger="submit">
+  <label for="search-q-{{ sid }}" class="sr-only">여행지 검색</label>
+  <input id="search-q-{{ sid }}" type="search" name="q" maxlength="50" autocomplete="off" enterkeyhint="search"
+    placeholder="떠나고 싶은 여행지를 검색하세요" aria-describedby="search-result-{{ sid }}"
+    class="h-10 w-full rounded-pill border border-border bg-surface-muted pl-4 pr-11 text-sm leading-5 text-text placeholder:text-text-muted focus-visible:border-accent">
+  <button type="submit" class="absolute right-1 top-1 inline-flex h-8 w-8 items-center justify-center rounded-pill text-text-muted hover:bg-surface hover:text-text" aria-label="검색">{{ icon("search", "h-4 w-4") }}</button>
+  <div id="search-result-{{ sid }}" data-search-result role="status" aria-live="polite"
+    class="absolute left-0 right-0 top-full z-50 mt-1 rounded-card border border-border bg-surface p-3 text-sm leading-6 text-text empty:hidden"></div>
+</form>

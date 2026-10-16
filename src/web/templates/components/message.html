@@ -1,0 +1,42 @@
+{#- message(role, content, sources, trace, time, live, pick)
+    메신저형 말풍선. role: user|assistant. assistant 는 왼쪽 아바타 + 말풍선(bg-surface-muted) + 출처 칩 + 접을 수 있는 실행 흐름.
+    pick: 여행지 목록(supported_destinations)을 주면 말풍선 안에 컴팩트 선택 카드를 그린다(미지원 안내용).
+    user 는 오른쪽 말풍선(bg-accent). time: 표시할 시각 문자열, live=True 면 JS 가 현재 시각을 채울 빈 자리를 둔다.
+    sources: [{city, section}] / trace: trace.html 의 steps 목록. None 이면 실행 흐름 생략. -#}
+{% from "components/chip.html" import source_chip %}
+{% from "components/destination_card.html" import destination_grid %}
+{% from "components/trace.html" import trace as _trace %}
+{% from "components/_icons.html" import icon as _icon %}
+{% macro bot_avatar() -%}
+<span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-pill bg-accent-soft text-text" aria-hidden="true">{{ _icon("sparkle", "h-4 w-4") }}</span>
+{%- endmacro %}
+{% macro message(role, content, sources=[], trace=None, time=None, live=False, pick=None) -%}
+{%- if role == "user" %}
+<div class="flex flex-col items-end">
+  <div data-user-msg class="max-w-[85%] rounded-card bg-accent px-3.5 py-2.5 text-sm leading-6 text-accent-fg whitespace-pre-wrap break-words">{{ content }}</div>
+  {%- if live %}<p class="num mt-1 text-xs leading-4 text-text-muted" data-time></p>{% elif time %}<p class="num mt-1 text-xs leading-4 text-text-muted">{{ time }}</p>{% endif %}
+</div>
+{%- else %}
+<div class="flex items-start gap-2">
+  {{ bot_avatar() }}
+  <div class="min-w-0 max-w-[85%]">
+    <div class="space-y-3 rounded-card bg-surface-muted px-3.5 py-2.5 text-sm leading-6 text-text">
+      <div class="whitespace-pre-wrap break-words">{{ content }}</div>
+      {%- if pick %}{{ destination_grid(pick, compact=True) }}{% endif %}
+      {%- if sources %}
+      <div class="flex flex-wrap gap-1.5" aria-label="출처">
+        {%- for s in sources %}{{ source_chip(s.city, s.section) }}{% endfor %}
+      </div>
+      {%- endif %}
+      {%- if trace %}
+      <details>
+        <summary class="cursor-pointer select-none text-xs leading-4 text-text-muted hover:text-text">실행 흐름 보기</summary>
+        <div class="mt-2">{{ _trace(trace) }}</div>
+      </details>
+      {%- endif %}
+    </div>
+    {%- if time %}<p class="num mt-1 text-xs leading-4 text-text-muted">{{ time }}</p>{% endif %}
+  </div>
+</div>
+{%- endif %}
+{%- endmacro %}

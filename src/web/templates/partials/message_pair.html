@@ -1,0 +1,33 @@
+{#- POST /chat 응답(또는 계획 생성 자동 시작): 사용자 말풍선 + SSE 로 채워질 비서 말풍선 자리. error 면 안내 문구만.
+    실행 흐름 보기는 ?debug=1 일 때만 그린다. -#}
+{% from "components/message.html" import message, bot_avatar %}
+{% from "components/_icons.html" import icon %}
+{% if error is defined %}
+<div role="alert" class="flex items-start gap-2 text-sm leading-6 text-danger">{{ icon("alert", "h-4 w-4 mt-1") }}<p>{{ error }}</p></div>
+{% else %}
+<div class="space-y-3">
+  {{ message("user", text, live=True) }}
+  <div class="flex items-start gap-2" hx-ext="sse" sse-connect="/chat/stream?thread_id={{ thread_id }}{% if debug %}&amp;debug=1{% endif %}" sse-close="done">
+    {{ bot_avatar() }}
+    <div class="min-w-0 max-w-[85%]">
+      <div class="space-y-3 rounded-card bg-surface-muted px-3.5 py-2.5 text-sm leading-6 text-text">
+        <div sse-swap="answer,error" aria-live="polite">
+          <p data-typing class="flex h-6 items-center text-text-muted">
+            <span class="flex items-center gap-1 motion-reduce:hidden" aria-hidden="true"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></span>
+            <span class="sr-only motion-reduce:not-sr-only">답변 작성 중…</span>
+          </p>
+        </div>
+        {%- if debug %}
+        <details>
+          <summary class="cursor-pointer select-none text-xs leading-4 text-text-muted hover:text-text">실행 흐름 보기</summary>
+          <div class="mt-2" sse-swap="node_start,node_end"></div>
+        </details>
+        {%- endif %}
+        <div sse-swap="done"></div>
+        <div class="hidden" sse-swap="board" hx-swap="none" aria-hidden="true"></div>
+      </div>
+      <p class="num mt-1 text-xs leading-4 text-text-muted" data-time="late"></p>
+    </div>
+  </div>
+</div>
+{% endif %}

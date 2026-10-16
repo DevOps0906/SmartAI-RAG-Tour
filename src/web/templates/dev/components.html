@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% from "components/button.html" import button %}
+{% from "components/badge.html" import badge %}
+{% from "components/card.html" import card %}
+{% from "components/chip.html" import source_chip, example_chip %}
+{% from "components/input.html" import chat_input %}
+{% from "components/message.html" import message %}
+{% from "components/skeleton.html" import skeleton %}
+{% from "components/stat.html" import stat %}
+{% from "components/trace.html" import trace %}
+
+{% macro sec(title) -%}
+<h3 class="mb-3 mt-8 border-b border-border pb-1 text-sm font-semibold leading-5 text-text first:mt-0">{{ title }}</h3>
+{%- endmacro %}
+
+{# 한 테마 패널: 모든 매크로의 배리언트와 상태. theme 는 라이트/다크 나란히 보기 위한 data-theme 값 #}
+{% macro showcase(theme) %}
+<div data-theme="{{ theme }}" class="min-w-0 rounded-card border border-border bg-bg p-4 text-text">
+  <p class="mb-4 text-xs font-medium leading-4 text-text-muted">{{ '라이트' if theme == 'light' else '다크' }}</p>
+
+  {{ sec("button — variant × size") }}
+  <div class="space-y-3">
+    {%- for v in ["primary", "secondary", "ghost", "danger"] %}
+    <div class="flex flex-wrap items-center gap-2">
+      {%- for sz in ["sm", "md", "lg"] %}{{ button(v ~ " " ~ sz, variant=v, size=sz) }}{% endfor %}
+    </div>
+    {%- endfor %}
+    <div class="flex flex-wrap items-center gap-2">
+      {{ button("아이콘", icon="plus") }}
+      {{ button("비활성", disabled=True) }}
+      {{ button("보내는 중", loading=True) }}
+    </div>
+  </div>
+
+  {{ sec("badge — tone") }}
+  <div class="flex flex-wrap gap-2">
+    {%- for t in ["neutral", "accent", "success", "warning", "danger"] %}{{ badge(t, t) }}{% endfor %}
+  </div>
+
+  {{ sec("chip — source_chip / example_chip") }}
+  <div class="flex flex-wrap gap-2">
+    {{ source_chip("도쿄", "음식과 맛집") }}
+    {{ source_chip("파리") }}
+    {{ example_chip("도쿄 날씨 알려줘") }}
+    {{ example_chip("50만원이면 엔화로 얼마야?") }}
+  </div>
+
+  {{ sec("stat — delta") }}
+  <div class="grid grid-cols-2 gap-4">
+    {{ stat("현재 기온", "24°") }}
+    {{ stat("환산 결과", "54,945", unit="JPY") }}
+    {{ stat("지난주 대비", "9.1", unit="KRW", delta=0.3, delta_label="전주 대비") }}
+    {{ stat("지난주 대비", "9.1", unit="KRW", delta=-0.2, delta_label="전주 대비") }}
+    {{ stat("변동 없음", "9.1", unit="KRW", delta=0) }}
+  </div>
+
+  {{ sec("skeleton") }}
+  {{ skeleton(3) }}
+
+  {{ sec("card — state") }}
+  <div class="space-y-4">
+    {% call card("기본 카드", subtitle="default", badge=badge("실시간", "success")) %}<p class="text-sm leading-6 text-text-muted">본문 내용이 들어가요.</p>{% endcall %}
+    {% call card("로딩 카드", state="loading") %}{% endcall %}
+    {% set act %}{{ example_chip("제주 2박 3일 일정 짜줘") }}{% endset %}
+    {% call card("빈 카드", state="empty", message="일정을 만들려면 목적지와 기간을 알려 주세요.", action=act) %}{% endcall %}
+    {% call card("오류 카드", state="error", message="날씨를 가져오지 못했어요. 도시를 확인하고 다시 시도해 주세요.") %}{% endcall %}
+    {% call card("폴백 카드", state="error", fallback=True, message="실시간 조회에 실패해 예시 데이터로 보여드려요.") %}<p class="num text-2xl font-semibold text-text">13°</p>{% endcall %}
+  </div>
+
+  {{ sec("message") }}
+  <div class="space-y-3">
+    {{ message("user", "도쿄 3박 4일 일정 알려줘") }}
+    {{ message("assistant", "도쿄 3박 4일 일정을 정리했어요.", sources=[{"city": "도쿄", "section": "일정 예시"}], trace=[{"node": "analyze_input", "status": "success", "ms": 812}]) }}
+  </div>
+
+  {{ sec("trace — status") }}
+  {{ trace([
+    {"node": "analyze_input", "status": "success", "ms": 812},
+    {"node": "rag_search", "status": "running", "ms": None},
+    {"node": "weather_tool", "status": "fallback", "ms": 21},
+    {"node": "exchange_tool", "status": "error", "ms": 5},
+    {"node": "generate_answer", "status": "pending", "ms": None}
+  ]) }}
+
+  {{ sec("chat_input") }}
+  {{ chat_input(name="msg-" ~ theme) }}
+</div>
+{% endmacro %}
+
+{% block title %}컴포넌트 미리보기{% endblock %}
+{% block page_title %}컴포넌트 미리보기{% endblock %}
+
+{% block board %}
+<p class="mb-4 text-sm leading-6 text-text-muted">모든 매크로의 배리언트와 상태를 라이트와 다크로 나란히 보여줘요. 오른쪽 위 버튼으로 페이지 테마도 바꿀 수 있어요.</p>
+<div class="grid gap-4 xl:grid-cols-2">
+  {{ showcase("light") }}
+  {{ showcase("dark") }}
+</div>
+{% endblock %}

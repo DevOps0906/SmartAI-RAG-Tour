@@ -1,0 +1,17 @@
+{#- SSE answer / done / error 조각 -#}
+{% from "components/chip.html" import source_chip %}
+{% from "components/destination_card.html" import destination_grid %}
+{% from "components/_icons.html" import icon %}
+{% if kind == "answer" %}
+<div class="whitespace-pre-wrap break-words">{{ text }}</div>
+{% if pick %}<div class="mt-3">{{ destination_grid(destinations, compact=True) }}</div>{% endif %}
+{% if sources %}
+<div class="mt-3 flex flex-wrap gap-1.5" aria-label="출처">
+  {%- for s in sources %}{{ source_chip(s.city, s.section) }}{% endfor %}
+</div>
+{% endif %}
+{% elif kind == "done" %}
+{% if debug and total_ms is defined %}<p class="num text-xs leading-4 text-text-muted">총 {{ total_ms|comma }} ms</p>{% endif %}
+{% elif kind == "error" %}
+<div role="alert" class="flex items-start gap-2 text-danger">{{ icon("alert", "h-4 w-4 mt-1") }}<p>{{ message }} <button type="button" class="underline" data-action="retry">다시 시도</button></p></div>
+{% endif %}

@@ -1,0 +1,32 @@
+{#- 추천·가이드 카드 + 출처 칩. 입력: fresh(새 데이터 1회 강조), s(State), ent, guide_docs, loading, oob -#}
+{% from "components/card.html" import card %}
+{% from "components/chip.html" import example_chip %}
+<div id="board-guide" class="min-w-0{% if fresh %} board-fresh{% endif %}"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+{%- if loading %}
+  {% call card("가이드", subtitle="불러오는 중", state="loading") %}{% endcall %}
+{%- elif not guide_docs %}
+  {% set act %}{{ example_chip("5월에 맛집 위주로 갈 도시 추천해줘", 'data-fill="5월에 맛집 위주로 갈 도시 추천해줘"') }}{% endset %}
+  {% call card("추천", state="empty", message="아직 추천할 여행지가 없어요. 취향이나 계절을 알려 주세요.", action=act) %}{% endcall %}
+{%- else %}
+  {% call card("가이드", subtitle=(guide_city ~ " " if guide_city else "") ~ "추천 요약") %}
+    {%- if ent.interests %}
+    <div class="mb-3 flex flex-wrap gap-1.5" aria-label="취향">
+      {%- for i in ent.interests %}<span class="inline-flex h-6 items-center rounded-pill bg-accent-soft px-2.5 text-xs leading-4 font-medium text-accent">{{ i }}</span>{% endfor %}
+    </div>
+    {%- endif %}
+    <ul class="space-y-3">
+      {%- for d in guide_docs %}
+      <li>
+        <details>
+          <summary class="cursor-pointer text-sm leading-6 text-text">
+            <span class="font-medium">{{ d.section }}</span>
+            <span class="text-text-muted"> — {{ d.content|snippet(48) }}</span>
+          </summary>
+          <p class="mt-2 text-sm leading-6 text-text-muted">{{ d.content|snippet(320) }}</p>
+        </details>
+      </li>
+      {%- endfor %}
+    </ul>
+  {% endcall %}
+{%- endif %}
+</div>

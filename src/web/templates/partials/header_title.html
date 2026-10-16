@@ -1,0 +1,3 @@
+{#- 페이지 헤더 제목(목적지 · 통화). SSE board 이벤트가 hx-swap-oob 로 교체한다. 계획이 있으면 여행 요약 바도 함께 교체. 입력: header_title, trip -#}
+<h1 id="page-title" hx-swap-oob="outerHTML" class="truncate text-base font-semibold leading-6 text-text">{{ header_title }}</h1>
+{% if trip %}{% set oob = True %}{% include "partials/trip_bar.html" %}{% endif %}

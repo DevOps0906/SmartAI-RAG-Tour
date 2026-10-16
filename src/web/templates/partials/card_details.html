@@ -1,0 +1,25 @@
+{#- 요청한 정보 카드 모음. 챗봇에서 맛집·쇼핑·교통 같은 상세를 물으면 카드로 쌓인다. 입력: details(최신순), oob, fresh -#}
+{% from "components/card.html" import card %}
+{% from "components/badge.html" import badge %}
+<div id="board-details" class="min-w-0{% if fresh %} board-fresh{% endif %}"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+{%- if not details %}
+  {% call card("요청한 정보", state="empty", message="챗봇에게 '2일차 맛집 더 알려줘', '교통 자세히' 처럼 물어보면 여기에 카드로 쌓여요.") %}{% endcall %}
+{%- else %}
+  {% call card("요청한 정보", subtitle=details|length ~ "개") %}
+    <ul class="grid gap-3 @lg:grid-cols-2">
+      {%- for d in details %}
+      <li id="detail-{{ d.id }}" class="min-w-0 rounded-control border border-border bg-surface p-3">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <h4 class="break-keep text-sm font-semibold leading-5 text-text">{{ d.title }}</h4>
+          {%- if d.day %}{{ badge(d.day ~ "일차", "accent") }}{% endif %}
+        </div>
+        <ul class="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-text-muted">
+          {%- for ln in d.body.split("\n") %}{% if ln.strip() %}<li class="break-words">{{ ln.lstrip("- ") }}</li>{% endif %}{% endfor %}
+        </ul>
+        {%- if d.created_at %}<p class="num mt-2 text-xs leading-4 text-text-muted">{{ d.created_at|kst }}</p>{% endif %}
+      </li>
+      {%- endfor %}
+    </ul>
+  {% endcall %}
+{%- endif %}
+</div>

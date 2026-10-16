@@ -1,0 +1,18 @@
+{#- 챗봇 대화 스레드(#thread)의 내용. 입력: offline, empty, autostart, messages, examples, destinations, thread_id, text, debug -#}
+{% from "components/message.html" import message %}
+{% from "components/chip.html" import example_chip %}
+{%- if offline %}
+{{ message("assistant", "이 기기에 저장된 사본이에요. 서버에는 이 대화가 없어서 이전 대화는 볼 수 없지만, 여기서 새로 질문할 수 있어요.") }}
+{%- elif empty %}
+{{ message("assistant", "안녕하세요! 여행지, 날씨, 환율, 일정을 물어보세요.") }}
+<div data-intro-chips class="flex flex-wrap gap-2 pl-10" aria-label="예시 질문">
+  {%- for ex in examples %}{{ example_chip(ex, 'data-fill="' ~ ex ~ '"') }}{% endfor %}
+</div>
+{%- elif autostart %}
+{# POST /plan 직후: 요약 문장이 사용자 메시지로 보이고, 계획 생성 스트림이 바로 시작된다 #}
+{% include "partials/message_pair.html" %}
+{%- else %}
+{%- for m in messages %}
+{{ message(m.role, m.text, pick=(destinations if m.pick else None)) }}
+{%- endfor %}
+{%- endif %}

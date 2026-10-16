@@ -1,0 +1,18 @@
+{#- illustration(city, cls): 도시 키로 일러스트 SVG 를 그린다.
+    media(item, cls): item.image 가 있으면 <img>, 없으면 SVG. 부모가 크기를 정하고 이 요소는 가득 채운다(나중에 실사 이미지로 교체 가능). -#}
+{% import "illustrations/tokyo.svg.html" as tokyo %}
+{% import "illustrations/paris.svg.html" as paris %}
+{% import "illustrations/bangkok.svg.html" as bangkok %}
+{% import "illustrations/newyork.svg.html" as newyork %}
+{% import "illustrations/jeju.svg.html" as jeju %}
+{% macro illustration(city, cls="") -%}
+{%- if city == "tokyo" %}{{ tokyo.art(cls) }}
+{%- elif city == "paris" %}{{ paris.art(cls) }}
+{%- elif city == "bangkok" %}{{ bangkok.art(cls) }}
+{%- elif city == "newyork" %}{{ newyork.art(cls) }}
+{%- elif city == "jeju" %}{{ jeju.art(cls) }}
+{%- endif -%}
+{%- endmacro %}
+{% macro media(item, cls="") -%}
+{%- if item.image %}<img src="{{ item.image }}" alt="" loading="lazy" class="{{ cls }} object-cover">{% else %}{{ illustration(item.dest, cls) }}{% endif -%}
+{%- endmacro %}

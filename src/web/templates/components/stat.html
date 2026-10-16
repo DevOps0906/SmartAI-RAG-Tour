@@ -1,0 +1,18 @@
+{#- stat(label, value, unit, delta, delta_label) — V-F 단일 지표.
+    delta: 숫자(양수=증가, 음수=감소, 0=변동 없음). 색 + 부호(+/−) + 화살표 + 텍스트를 함께 표시. -#}
+{% from "components/_icons.html" import icon as _icon %}
+{% macro stat(label, value, unit=None, delta=None, delta_label=None) -%}
+<div class="space-y-1">
+  <p class="text-sm leading-5 text-text-muted">{{ label }}</p>
+  <p class="num text-3xl font-semibold leading-9 text-text">{{ value }}{% if unit %}<span class="ml-1 text-base font-medium leading-6 text-text-muted">{{ unit }}</span>{% endif %}</p>
+  {%- if delta is not none %}
+  {%- set up = delta > 0 %}{% set down = delta < 0 %}
+  <p class="num inline-flex items-center gap-1 text-sm leading-5 font-medium {{ 'text-up' if up else ('text-down' if down else 'text-text-muted') }}">
+    {%- if up %}{{ _icon("arrow-up", "h-3.5 w-3.5") }}{% elif down %}{{ _icon("arrow-down", "h-3.5 w-3.5") }}{% endif %}
+    <span>{{ '+' if up else ('−' if down else '') }}{{ delta|abs }}</span>
+    {%- if delta_label %}<span class="font-normal text-text-muted">{{ delta_label }}</span>{% endif %}
+    {%- if not up and not down %}<span class="font-normal">변동 없음</span>{% endif %}
+  </p>
+  {%- endif %}
+</div>
+{%- endmacro %}

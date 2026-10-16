@@ -1,0 +1,71 @@
+{#- 공통 GNB (랜딩과 /planner 공용). 입력: nav_active("landing"|"planner"), contained(True 면 가운데 정렬 최대 폭), debug.
+    여행지 목록은 전역 nav_destinations() 를 쓴다. 로고는 항상 "/" (랜딩). 1024px 미만은 햄버거 -> 전체메뉴 패널.
+    동작은 static/js/app.js: data-action(open-gnb, close-gnb, toggle-dest-menu, new-plan, toggle-theme), data-plan-dest. -#}
+{% from "components/_icons.html" import icon %}
+{% from "components/button.html" import button %}
+{% set wrap = "mx-auto max-w-7xl" if contained else "" %}
+{% set dests = nav_destinations() %}
+{% set link_cls = "inline-flex h-10 items-center gap-1 rounded-control px-3 text-sm font-medium leading-5 text-text hover:bg-surface-muted" %}
+<header id="gnb" class="{{ 'sticky top-0' if contained else 'relative' }} z-30 shrink-0 border-b border-border bg-surface">
+  <div class="{{ wrap }} flex h-16 w-full items-center gap-2 px-3 sm:px-4 lg:gap-4">
+    <button type="button" data-action="open-gnb" aria-label="전체메뉴 열기" aria-controls="gnb-panel" aria-expanded="false"
+      class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-control text-text hover:bg-surface-muted lg:hidden">{{ icon("menu", "h-5 w-5") }}</button>
+    <a href="/" class="inline-flex h-10 shrink-0 items-center gap-2 rounded-control pr-2 text-base font-bold leading-6 text-text" aria-label="스마트 여행 비서 첫 화면">
+      <span class="inline-flex h-8 w-8 items-center justify-center rounded-control bg-accent text-accent-fg" aria-hidden="true">{{ icon("sparkle", "h-5 w-5") }}</span>
+      <span class="max-sm:sr-only">스마트 여행 비서</span>
+    </a>
+
+    <div class="hidden min-w-0 max-w-md flex-1 lg:block">{% with sid = "top" %}{% include "partials/gnb_search.html" %}{% endwith %}</div>
+    <div class="min-w-0 flex-1 lg:hidden"></div>
+
+    <nav aria-label="주요 메뉴" class="hidden shrink-0 items-center gap-1 lg:flex">
+      <div class="relative" data-dest-menu>
+        <button type="button" data-action="toggle-dest-menu" aria-haspopup="true" aria-expanded="false" aria-controls="gnb-dest-menu" class="{{ link_cls }}">여행지{{ icon("chevron-down", "h-4 w-4") }}</button>
+        <ul id="gnb-dest-menu" hidden class="absolute left-0 top-full z-50 mt-1 w-60 rounded-card border border-border bg-surface p-1">
+          {%- for d in dests %}
+          <li><button type="button" data-plan-dest="{{ d.key }}" class="flex w-full items-baseline justify-between gap-2 rounded-control px-3 py-2 text-left text-sm leading-5 text-text hover:bg-surface-muted"><span class="font-medium">{{ d.ko }}</span><span class="text-xs leading-4 text-text-muted">{{ d.country }}</span></button></li>
+          {%- endfor %}
+        </ul>
+      </div>
+      <a href="/#popular" class="{{ link_cls }}">인기 코스</a>
+      <a href="/planner{{ '?debug=1' if debug else '' }}" class="{{ link_cls }}"{% if nav_active == "planner" %} aria-current="page"{% endif %}>여행 작업실</a>
+    </nav>
+
+    <button type="button" data-action="toggle-theme" aria-label="테마 바꾸기 (라이트/다크)"
+      class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-control text-text-muted hover:bg-surface-muted hover:text-text">{{ icon("sun-moon", "h-5 w-5") }}</button>
+    <div class="hidden sm:block">{{ button("새 여행 계획", variant="primary", size="md", icon="plus", attrs='data-action="new-plan"') }}</div>
+    <div class="sm:hidden">{{ button("새 계획", variant="primary", size="sm", icon="plus", attrs='data-action="new-plan"') }}</div>
+  </div>
+</header>
+
+{# 전체메뉴 패널 (1024px 미만) #}
+<div id="gnb-panel" data-open="false" class="fixed inset-0 z-50 hidden data-[open=true]:block lg:hidden">
+  <div class="absolute inset-0 bg-text/40" data-action="close-gnb" aria-hidden="true"></div>
+  <div role="dialog" aria-modal="true" aria-label="전체메뉴" class="absolute inset-y-0 left-0 flex w-80 max-w-full flex-col overflow-y-auto border-r border-border bg-surface">
+    <div class="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-border px-4">
+      <span class="inline-flex items-center gap-2 text-base font-bold leading-6 text-text">
+        <span class="inline-flex h-8 w-8 items-center justify-center rounded-control bg-accent text-accent-fg" aria-hidden="true">{{ icon("sparkle", "h-5 w-5") }}</span>전체메뉴
+      </span>
+      <button type="button" data-action="close-gnb" aria-label="전체메뉴 닫기" class="inline-flex h-10 w-10 items-center justify-center rounded-control text-text-muted hover:bg-surface-muted hover:text-text">{{ icon("x", "h-5 w-5") }}</button>
+    </div>
+    <div class="space-y-5 p-4">
+      {% with sid = "panel" %}{% include "partials/gnb_search.html" %}{% endwith %}
+      <div>
+        <p class="mb-1 text-xs font-medium leading-4 text-text-muted">여행지</p>
+        <ul class="space-y-0.5">
+          {%- for d in dests %}
+          <li><button type="button" data-plan-dest="{{ d.key }}" class="flex h-11 w-full items-center justify-between gap-2 rounded-control px-3 text-left text-sm text-text hover:bg-surface-muted"><span class="font-medium">{{ d.ko }}</span><span class="text-xs leading-4 text-text-muted">{{ d.country }}</span></button></li>
+          {%- endfor %}
+        </ul>
+      </div>
+      <ul class="space-y-0.5 border-t border-border pt-3">
+        <li><a href="/#popular" data-action="close-gnb" class="flex h-11 items-center rounded-control px-3 text-sm font-medium text-text hover:bg-surface-muted">인기 코스</a></li>
+        <li><a href="/planner{{ '?debug=1' if debug else '' }}" class="flex h-11 items-center rounded-control px-3 text-sm font-medium text-text hover:bg-surface-muted"{% if nav_active == "planner" %} aria-current="page"{% endif %}>여행 작업실</a></li>
+      </ul>
+      <div class="flex flex-col gap-2">
+        {{ button("새 여행 계획", variant="primary", size="lg", icon="plus", attrs='data-action="new-plan"') }}
+        {{ button("테마 바꾸기", variant="secondary", size="md", attrs='data-action="toggle-theme"') }}
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,39 @@
+{#- card(title, subtitle, badge, state, message, action, fallback) — {% call card(...) %}본문{% endcall %} 로 사용.
+    state: default|loading|empty|error
+    empty: message + action(렌더된 HTML, 예: example_chip 결과)
+    error: message + action(렌더된 HTML, 예: 다시 시도 버튼), fallback=True 면 "예시 데이터" 배지 + 본문(caller)을 예시로 그대로 보여준다
+    badge: 렌더된 배지 HTML(badge 매크로 결과) 또는 None -#}
+{% from "components/badge.html" import badge as _badge %}
+{% from "components/skeleton.html" import skeleton %}
+{% from "components/_icons.html" import icon as _icon %}
+{% macro card(title, subtitle=None, badge=None, state="default", message=None, action=None, fallback=False) -%}
+{%- set hid = "card-" ~ (title|replace(" ", "-")) -%}
+<section class="rounded-card border border-border bg-surface p-5" aria-labelledby="{{ hid }}"{% if state == "loading" %} aria-busy="true"{% endif %}>
+  <header class="mb-4 flex items-start justify-between gap-3">
+    <div class="min-w-0">
+      <h3 id="{{ hid }}" class="break-keep text-base font-semibold leading-6 text-text">{{ title }}</h3>
+      {%- if subtitle %}<p class="break-keep text-sm leading-5 text-text-muted">{{ subtitle }}</p>{% endif %}
+    </div>
+    <div class="flex shrink-0 items-center gap-1.5">
+      {%- if state == "error" and fallback %}{{ _badge("예시 데이터", "warning") }}{% endif %}
+      {%- if badge %}{{ badge }}{% endif %}
+    </div>
+  </header>
+  {%- if state == "loading" %}
+    {{ skeleton(3) }}
+  {%- elif state == "empty" %}
+    <div class="flex flex-col items-start gap-3 text-sm leading-6 text-text-muted">
+      <p>{{ message or "아직 표시할 내용이 없어요." }}</p>
+      {%- if action %}<div class="flex flex-wrap gap-2">{{ action }}</div>{% endif %}
+    </div>
+  {%- elif state == "error" %}
+    <div role="alert" class="flex items-start gap-2 text-sm leading-6 text-danger">
+      {{ _icon("alert", "h-4 w-4 mt-1") }}<p>{{ message or "정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요." }}</p>
+    </div>
+    {%- if action %}<div class="mt-3 flex flex-wrap gap-2">{{ action }}</div>{% endif %}
+    {%- if fallback and caller %}<div class="mt-3">{{ caller() }}</div>{% endif %}
+  {%- else %}
+    {{ caller() }}
+  {%- endif %}
+</section>
+{%- endmacro %}

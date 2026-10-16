@@ -1,0 +1,38 @@
+{#- 보드 전체. 입력: s, ent, trip, empty, loading, oob, ...
+    trip 이 있으면 여행 요약 바 → 요청한 정보 → 환율 / 가이드 요약 → 일정(가장 넓게) / 여행기간중 날씨현황.
+    없으면 "새 여행 계획으로 시작" CTA(빈 보드) + 기존 카드. -#}
+{% from "components/button.html" import button %}
+{% if trip %}
+{% include "partials/trip_bar.html" %}
+<div class="@container">
+  <div class="mb-4">{% include "partials/card_details.html" %}</div>
+  <div class="grid gap-4 @lg:grid-cols-2">
+    {% include "partials/card_exchange.html" %}
+    {% include "partials/card_guide.html" %}
+  </div>
+  <div class="mt-4 grid gap-4 @4xl:grid-cols-3">
+    <div class="min-w-0 @4xl:col-span-2">{% include "partials/card_itinerary.html" %}</div>
+    <div class="min-w-0">{% include "partials/card_forecast.html" %}</div>
+  </div>
+</div>
+{% else %}
+{% if empty %}
+<div id="board-empty" class="mb-4 flex flex-col items-start gap-3 rounded-card border border-border bg-surface p-5">
+  <div>
+    <h2 class="text-base font-semibold leading-6 text-text">새 여행 계획으로 시작해 보세요</h2>
+    <p class="text-sm leading-6 text-text-muted">여행지와 일정, 가고 싶은 장소를 고르면 일정·날씨·환율이 여기에 모여요. 챗봇에 바로 질문해도 돼요.</p>
+  </div>
+  {{ button("새 여행 계획", variant="primary", size="md", icon="plus", attrs='data-action="new-plan"') }}
+</div>
+{% endif %}
+<div class="@container">
+<div class="grid gap-4 @lg:grid-cols-2">
+  {% include "partials/card_weather.html" %}
+  {% include "partials/card_exchange.html" %}
+</div>
+<div class="mt-4 grid gap-4 @4xl:grid-cols-2">
+  {% include "partials/card_guide.html" %}
+  {% include "partials/card_itinerary.html" %}
+</div>
+</div>
+{% endif %}
