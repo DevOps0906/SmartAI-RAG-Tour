@@ -8,3 +8,6 @@ data/threads.sqlite
 src/web/static/css/app.css
 .pytest_cache/
 data/threads.sqlite-*
+
+.vercel
+.env*

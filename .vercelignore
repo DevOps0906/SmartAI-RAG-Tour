@@ -11,6 +11,8 @@ plans/
 data/index/
 data/threads.sqlite*
 .env
+.env.*
+!.env.example
 *.md
 !README.md
 실습과제.txt
