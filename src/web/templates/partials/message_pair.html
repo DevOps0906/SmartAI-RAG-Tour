@@ -7,7 +7,7 @@
 {% else %}
 <div class="space-y-3">
   {{ message("user", text, live=True) }}
-  <div class="flex items-start gap-2" hx-ext="sse" sse-connect="/chat/stream?thread_id={{ thread_id }}{% if debug %}&amp;debug=1{% endif %}" sse-close="done">
+  <div class="flex items-start gap-2" hx-ext="sse" sse-connect="/chat/stream?thread_id={{ thread_id }}{% if debug %}&amp;debug=1{% endif %}{% if pending %}&amp;p={{ pending|urlencode }}{% endif %}" sse-close="done">
     {{ bot_avatar() }}
     <div class="min-w-0 max-w-[85%]">
       <div class="space-y-3 rounded-card bg-surface-muted px-3.5 py-2.5 text-sm leading-6 text-text">

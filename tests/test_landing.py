@@ -109,7 +109,7 @@ def test_post_plan_from_landing_goes_to_planner(client):
 # ------------------------------------------------------------ 로컬 저장 사양
 
 def _tid_of(r):
-    return r.headers["HX-Redirect"].split("=")[1]
+    return r.headers["HX-Redirect"].split("thread_id=")[1].split("&")[0]
 
 
 def test_plan_json_shape_and_no_secrets(client):

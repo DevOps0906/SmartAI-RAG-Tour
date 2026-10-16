@@ -245,6 +245,28 @@ uvicorn src.web.app:app --port 8765
 
 계획 생성 경로: `analyze_input → rag_search → weather_tool → exchange_tool → plan_itinerary → generate_answer`. 예보 범위(약 5일) 밖 날짜는 가이드의 계절 설명("예상 기후")으로 표시합니다.
 
+### 5-7. Vercel 배포
+
+`pyproject.toml` 의 `[tool.vercel] entrypoint = "src.web.app:app"` 로 FastAPI 앱이 그대로 배포됩니다. 정적 파일(`/static`)은 Vercel 이 CDN 으로 올립니다.
+
+1. https://vercel.com/new 에서 GitHub 저장소 `SmartAI-RAG-Tour` 를 Import 합니다. Framework Preset 은 자동(FastAPI)으로 잡히며 빌드 설정은 바꿀 필요가 없습니다.
+2. **Settings → Environment Variables** 에 다음을 넣습니다.
+
+   | 변수 | 필수 | 설명 |
+   |---|---|---|
+   | `WEB_SECRET` | 필수 | 임의의 긴 문자열. 접수 토큰 서명 키 (아래 참고) |
+   | `ANTHROPIC_API_KEY` | 권장 | 없으면 템플릿 답변 |
+   | `OPENWEATHER_API_KEY` | 선택 | 없으면 mock 날씨 |
+   | `EMBEDDING_PROVIDER=openai` + `OPENAI_API_KEY` | 선택 | 의미 기반 검색. 없으면 `hash` 임베딩 |
+
+3. Deploy 를 누릅니다. 이후 `main` 에 푸시할 때마다 자동으로 다시 배포됩니다.
+
+서버리스 환경에 맞춘 동작:
+
+- **임베딩:** torch 가 필요한 `huggingface` 임베딩은 번들 한도를 넘으므로, Vercel 에서는 기본값이 `hash` 입니다 (`VERCEL=1` 일 때). 검색 품질이 필요하면 위 표처럼 `openai` 임베딩을 쓰세요.
+- **쓰기 경로:** 배포 번들은 읽기 전용이라 FAISS 인덱스와 대화 기록 DB 는 `/tmp/index`, `/tmp/threads.sqlite` 에 만들어집니다. 인덱스는 콜드 스타트 때 가이드 5개로 몇 초 안에 다시 만들어집니다.
+- **요청 간 전달:** `POST /chat`·`POST /plan` 과 이어지는 `GET /chat/stream`·`/planner` 를 다른 인스턴스가 받을 수 있으므로, 접수한 메시지와 여행 계획을 HMAC 서명 토큰(`p=`)으로 함께 넘깁니다 (`src/web/pending.py`). 그래서 `WEB_SECRET` 을 모든 인스턴스에 같은 값으로 설정해야 합니다.
+
 ## 6. 환경변수 (`.env.example` 기준)
 
 | 변수 | 기본값 | 설명 |
@@ -257,12 +279,13 @@ uvicorn src.web.app:app --port 8765
 | `OPENWEATHER_API_KEY` | 빈 값 | 없으면 날씨 mock |
 | `WEATHER_MODE`, `EXCHANGE_MODE` | `auto` | `auto` 는 실시간 시도 후 실패 시 mock, `mock` 은 항상 mock |
 | `EXCHANGE_API_BASE` | `https://open.er-api.com/v6/latest` | 환율 API (무키) |
-| `GUIDES_DIR`, `RAG_INDEX_DIR` | 빈 값 | 비우면 `data/guides`, `data/index` |
+| `GUIDES_DIR`, `RAG_INDEX_DIR` | 빈 값 | 비우면 `data/guides`, `data/index` (Vercel 은 인덱스를 `/tmp/index`) |
 | `RAG_TOP_K`, `RAG_CHUNK_SIZE`, `RAG_CHUNK_OVERLAP` | 4 / 500 / 80 | 검색/청킹 설정 |
 | `HTTP_TIMEOUT` | 5 | 외부 API 타임아웃(초) |
 | `MAX_STEPS` | 8 | 한 턴에서 작업 노드를 최대 몇 번 실행할지 (무한 루프 가드) |
 | `WEB_CHECKPOINT` | `sqlite` | `sqlite` / `memory` |
-| `WEB_DB_PATH` | 빈 값 | 비우면 `data/threads.sqlite` |
+| `WEB_DB_PATH` | 빈 값 | 비우면 `data/threads.sqlite` (Vercel 은 `/tmp/threads.sqlite`) |
+| `WEB_SECRET` | 빈 값 | 접수 토큰 서명 키. 로컬은 비워도 되고, 배포에서는 반드시 설정 |
 
 ## 7. 테스트
 
@@ -301,6 +324,7 @@ uvicorn src.web.app:app --port 8765
 - 키가 없으면 의도 분석은 규칙 기반, 답변은 템플릿(가이드 문장을 정리해 이어 붙인 요약)이라 자연스러움과 복합 질문 이해가 제한됩니다.
 - `hash` 임베딩은 검색 의미 품질이 낮습니다. 품질이 필요하면 `requirements-hf.txt` 설치 후 `EMBEDDING_PROVIDER=huggingface` 를 쓰세요 (모델 다운로드와 torch 필요).
 - 환율은 실시간 조회 시 값이 계속 변하고 은행 수수료를 반영하지 않는 참고용입니다. 조회에 실패하면 고정 환율표(mock)로 대체되며 화면에 "고정 환율"로 표시됩니다. 날씨 mock 도 참고용 예상치입니다.
+- **Vercel 배포에서는 서버 쪽 대화 기록이 오래 유지되지 않습니다.** 기록 DB 가 인스턴스마다 `/tmp` 에 있어 콜드 스타트나 다른 인스턴스로 넘어가면 "내 여행 기록" 목록과 이전 대화 맥락이 비어 보일 수 있습니다. 만든 여행 계획은 브라우저 localStorage 에도 저장되어 랜딩의 "내 여행 계획"에서 다시 열 수 있습니다. 영구 보관이 필요하면 Postgres 체크포인터(`langgraph-checkpoint-postgres`)로 바꿔야 합니다.
 - 지원 도시는 가이드 5곳(도쿄, 파리, 방콕, 뉴욕, 제주)이고 통화는 JPY, EUR, THB, USD, KRW 입니다. 그 밖의 나라·도시를 말하면 "아직 존재하지 않습니다"라고 안내하고 선택 가능한 여행지를 보여 줍니다.
 
 ### 여행지 추가 방법

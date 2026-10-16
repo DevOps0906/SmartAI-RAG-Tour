@@ -22,6 +22,7 @@ def client():
     app.state.checkpointer, app.state.graph = cp, build_graph(checkpointer=cp)
     routes.PENDING.clear()
     routes.RUNNING.clear()
+    routes.USED_TOKENS.clear()
     with TestClient(app) as c:
         yield c
     app.state.checkpointer = app.state.graph = None
@@ -83,7 +84,7 @@ def test_static(client):
 
 def test_chat_accepts_and_validates(client):
     r = client.post("/chat", data={"message": " 안녕 ", "thread_id": "t-x"})
-    assert 'sse-connect="/chat/stream?thread_id=t-x"' in r.text
+    assert 'sse-connect="/chat/stream?thread_id=t-x&amp;p=' in r.text
     assert r.headers["HX-Trigger"] == "thread-updated" and routes.PENDING["t-x"] == "안녕"
     for msg in ("   ", "", "가" * 1001):
         bad = client.post("/chat", data={"message": msg, "thread_id": "t-y"})
@@ -358,3 +359,29 @@ def test_fallback_answer_has_no_file_markers():
                             "weather": {"source": "mock", "condition": "비", "temp_c": 13, "humidity": 80, "advice": ""}})
     assert ".txt#" not in text and "[paris" not in text and "mock" not in text
     assert "일정 예시:" in text and "날씨(예시 데이터·참고용)" in text
+
+
+def _stream_url(html: str) -> str:
+    return re.search(r'sse-connect="([^"]+)"', html).group(1).replace("&amp;", "&")
+
+
+def test_stream_works_on_another_instance_via_token(client):
+    """서버리스: POST /chat 과 GET /chat/stream 을 다른 인스턴스가 받아도(메모리 PENDING 없음) p= 토큰으로 실행된다."""
+    url = _stream_url(client.post("/chat", data={"message": "도쿄 날씨 알려줘", "thread_id": "t-inst"}).text)
+    routes.PENDING.clear()
+    with client.stream("GET", url) as s:
+        names = [n for n, _ in blocks("".join(s.iter_text()))]
+    assert "answer" in names and "error" not in names
+    with client.stream("GET", url) as s:   # SSE 재연결로 같은 토큰이 다시 와도 두 번 실행하지 않는다
+        assert "error" in [n for n, _ in blocks("".join(s.iter_text()))]
+
+
+def test_stream_token_rejects_tampering_and_other_thread(client):
+    from src.web import pending
+    tok = pending.encode("t-a", "안녕")
+    assert pending.decode(tok, "t-a") == ("안녕", None)
+    assert pending.decode(tok, "t-b") is None                 # 다른 대화에 재사용 불가
+    body, sig = tok.rsplit(".", 1)
+    forged = pending.encode("t-a", "다른 말").rsplit(".", 1)[0] + "." + sig
+    assert pending.decode(forged, "t-a") is None              # 서명 불일치
+    assert pending.decode("garbage", "t-a") is None and pending.decode("", "t-a") is None

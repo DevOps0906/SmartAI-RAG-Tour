@@ -15,7 +15,9 @@ def make_checkpointer():
         from langgraph.checkpoint.sqlite import SqliteSaver
         path = Path(s.web_db_path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        return SqliteSaver(sqlite3.connect(str(path), check_same_thread=False))
+        saver = SqliteSaver(sqlite3.connect(str(path), check_same_thread=False))
+        saver.setup()   # 새 DB(새 clone, 서버리스 /tmp)에서도 기록 목록 조회가 checkpoints 테이블을 찾도록 미리 만든다
+        return saver
     from langgraph.checkpoint.memory import MemorySaver
     return MemorySaver()
 

@@ -62,8 +62,8 @@ def post_plan(client, **kw):
 
 def test_plan_ok_redirects_with_new_thread(client):
     r = post_plan(client, places=["아사쿠사", "시부야"], places_text="롯폰기, 시부야")
-    assert r.status_code == 200 and re.fullmatch(r"/planner\?thread_id=[0-9a-f]{32}", r.headers["HX-Redirect"])
-    tid = r.headers["HX-Redirect"].split("=")[1]
+    assert r.status_code == 200 and re.fullmatch(r"/planner\?thread_id=[0-9a-f]{32}&p=[\w.-]+", r.headers["HX-Redirect"])
+    tid = r.headers["HX-Redirect"].split("thread_id=")[1].split("&")[0]
     trip = routes.PENDING_TRIP[tid]
     assert trip["places"] == ["아사쿠사", "시부야", "롯폰기"] and trip["days"] == 3 and trip["nights"] == 2
     assert trip["end_date"] == (TODAY + timedelta(days=3)).isoformat()      # end_date 는 서버 계산값
@@ -336,7 +336,7 @@ def test_modal_markup(client):
 def test_plan_page_autostart_and_board(client):
     r = post_plan(client, places=["아사쿠사", "시부야"], days="3")
     url = r.headers["HX-Redirect"]
-    tid = url.split("=")[1]
+    tid = url.split("thread_id=")[1].split("&")[0]
     page = client.get(url).text
     assert f"/chat/stream?thread_id={tid}" in page and 'data-autostart="true"' in page
     assert re.search(r"도쿄 \d+/\d+~\d+/\d+ 2박3일, 아사쿠사·시부야 포함 계획 만들어줘", page)
@@ -364,7 +364,7 @@ def ask_stream(client, tid, debug=False):
 
 def test_detail_board_oob_and_day_link(client):
     r = post_plan(client, places=["아사쿠사"], days="3")
-    tid = r.headers["HX-Redirect"].split("=")[1]
+    tid = r.headers["HX-Redirect"].split("thread_id=")[1].split("&")[0]
     ask_stream(client, tid)
     bl = ask(client, "2일차 맛집 더 알려줘", tid)
     names = [n for n, _ in bl]
@@ -404,7 +404,7 @@ def test_debug_flag_controls_execution_flow(client):
 
 def test_board_has_no_md_everywhere(client):
     r = post_plan(client, places=[], days="2")
-    tid = r.headers["HX-Redirect"].split("=")[1]
+    tid = r.headers["HX-Redirect"].split("thread_id=")[1].split("&")[0]
     bl = ask_stream(client, tid)
     assert ".txt" not in "".join(h for _, h in bl)
     page = client.get(f"/?thread_id={tid}").text
@@ -420,3 +420,12 @@ def test_forecast_card_renders_pop_value_not_dict_method():
         forecast=[{"date": "2026-10-16", "tmin": 11, "tmax": 20, "condition": "맑음", "pop": 40, "source": "forecast"}],
         loading=False, oob=False, fresh=False, request=None)
     assert "built-in method" not in html
+
+
+def test_plan_autostarts_on_another_instance_via_token(client):
+    """랜딩 POST /plan 뒤 /planner 를 다른 인스턴스가 받아도(메모리 PENDING 없음) 리다이렉트 주소의 토큰으로 계획이 시작된다."""
+    url = post_plan(client, places=["아사쿠사"], days="3").headers["HX-Redirect"]
+    routes.PENDING.clear()
+    routes.PENDING_TRIP.clear()
+    page = client.get(url).text
+    assert 'data-autostart="true"' in page and "/chat/stream?thread_id=" in page

@@ -21,7 +21,7 @@ def _clear_pending():
 def make_trip(client, dest="tokyo", days="3", places=("아사쿠사",)):
     """POST /plan 후 스트림을 끝까지 돌려 체크포인트에 trip thread 를 만든다."""
     r = client.post("/plan", data={**DATA, "destination": dest, "days": days, "places": list(places)}, follow_redirects=False)
-    tid = r.headers["location"].split("=")[1]
+    tid = r.headers["location"].split("thread_id=")[1].split("&")[0]
     ask_stream(client, tid)
     return tid
 
@@ -43,7 +43,7 @@ def test_post_plan_workspace_partial(client):
     url = r.headers["HX-Push-Url"]
     assert re.fullmatch(r"/planner\?thread_id=[0-9a-f]{32}", url)
     assert r.headers["HX-Retarget"] == "#board-root" and r.headers["HX-Reswap"] == "innerHTML"
-    tid = url.split("=")[1]
+    tid = url.split("thread_id=")[1].split("&")[0]
     body = r.text
     assert "<html" not in body and 'id="board-trip"' in body and "아사쿠사" in body             # 요약 바와 보드(스켈레톤)
     assert f"/chat/stream?thread_id={tid}" in body and 'hx-swap-oob="innerHTML"' in body       # 새 스트림 시작 마크업

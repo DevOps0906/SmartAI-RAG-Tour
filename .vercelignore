@@ -1,0 +1,16 @@
+# 배포 번들에 필요 없는 파일 (런타임은 src/, data/guides/ 만 사용)
+.venv/
+.pytest_cache/
+**/__pycache__/
+tests/
+tools/
+scripts/
+Designs/
+develop/
+plans/
+data/index/
+data/threads.sqlite*
+.env
+*.md
+!README.md
+실습과제.txt

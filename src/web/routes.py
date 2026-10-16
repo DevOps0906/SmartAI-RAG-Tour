@@ -16,16 +16,17 @@ from src.courses import courses as landing_courses, slides as landing_slides
 from src.destinations import DESTINATIONS, find_unsupported, normalize_destination, supported_destinations, supported_keys
 from src.rag.guide import guide_places
 from src.trip import MAX_DAYS, MAX_PLACES, TripError, build_trip, split_places, summary_text
-from src.web import mock, threads as thread_store
+from src.web import mock, pending as pending_token, threads as thread_store
 from src.web.plans import clean_plan, plan_payload
 from src.web.runtime import get_runtime
 from src.web.sse import Renderer, format_sse, graph_events
 
 router = APIRouter()
 
-PENDING: dict[str, str] = {}   # thread_id -> 접수된 메시지 (단일 프로세스 전제)
+PENDING: dict[str, str] = {}   # thread_id -> 접수된 메시지. 다른 인스턴스로 가면 URL 의 p= 토큰으로 대신 받는다
 PENDING_TRIP: dict[str, dict] = {}   # thread_id -> POST /plan 이 확정한 trip (스트림이 시작되면 꺼낸다)
 RUNNING: set[str] = set()      # 실행 중인 thread_id (같은 대화 동시 실행 방지)
+USED_TOKENS: set[str] = set()  # 이미 실행한 p= 토큰 (SSE 재연결로 같은 메시지를 다시 실행하지 않게)
 
 EXAMPLES = [
     "도쿄 날씨 알려줘",
@@ -93,13 +94,15 @@ def _modal_ctx(debug: bool = False) -> dict:
             "max_days": MAX_DAYS, "max_places": MAX_PLACES, "debug": debug}
 
 
-def planner_url(thread_id: str | None = None, debug=False) -> str:
-    """여행 작업실 주소. 링크·리다이렉트는 모두 이 함수(또는 같은 형식)를 쓴다."""
+def planner_url(thread_id: str | None = None, debug=False, pending: str = "") -> str:
+    """여행 작업실 주소. 링크·리다이렉트는 모두 이 함수(또는 같은 형식)를 쓴다. pending 은 POST /plan 의 접수 토큰."""
     q = []
     if thread_id:
         q.append(f"thread_id={quote(thread_id, safe='')}")
     if _is_debug(debug):
         q.append("debug=1")
+    if pending:
+        q.append(f"p={quote(pending, safe='')}")
     return "/planner" + ("?" + "&".join(q) if q else "")
 
 
@@ -131,19 +134,32 @@ def _is_partial(request: Request) -> bool:
     return bool(request.headers.get("HX-Request")) and not request.headers.get("HX-History-Restore-Request")
 
 
-async def _workspace_ctx(graph, tid: str, debug) -> dict:
+def _take_pending(tid: str, token: str = "", pop: bool = False) -> tuple[str | None, dict | None]:
+    """접수된 (메시지, trip). 이 인스턴스의 메모리에 없으면 p= 토큰에서 꺼낸다."""
+    if tid in PENDING:
+        get = PENDING.pop if pop else PENDING.get
+        tget = PENDING_TRIP.pop if pop else PENDING_TRIP.get
+        return get(tid, None), tget(tid, None)
+    if token in USED_TOKENS:
+        return None, None
+    return pending_token.decode(token, tid) or (None, None)
+
+
+async def _workspace_ctx(graph, tid: str, debug, token: str = "") -> dict:
     """작업실(보드·요약 바·챗봇 대화) 한 thread 분의 템플릿 값. 체크포인트가 있으면 복원하고, POST /plan 직후면 스트림 자동 시작."""
     restored = await run_in_threadpool(thread_store.restore, graph, tid)
     state = restored["state"]
     # POST /plan 직후: 아직 체크포인트가 없으므로 접수된 trip 으로 계획 보드를 먼저 그리고 스트림을 자동 시작한다
-    autostart = bool(not restored["messages"] and tid in PENDING and tid in PENDING_TRIP)
+    text, trip = _take_pending(tid, token) if not restored["messages"] else (None, None)
+    autostart = bool(text and trip)
     if autostart:
-        state = {"trip": PENDING_TRIP[tid]}
+        state = {"trip": trip}
     ctx = board_context(state)
     ctx.update(
         empty=not restored["messages"] and not autostart, thread_id=tid, examples=EXAMPLES,
         messages=restored["messages"], sources=[], loading=autostart, oob=False, fresh=False,
-        debug=_is_debug(debug), autostart=autostart, text=PENDING.get(tid) if autostart else None, offline=False,
+        debug=_is_debug(debug), autostart=autostart, text=text if autostart else None, offline=False,
+        pending=pending_token.encode(tid, text, trip) if autostart else "",
     )
     return ctx
 
@@ -163,7 +179,7 @@ def _history_ctx(rows: list[dict], thread_id: str | None, debug, offset: int = 0
 
 
 @router.get("/planner", response_class=HTMLResponse)
-async def planner(request: Request, thread_id: str | None = None, debug: str = ""):
+async def planner(request: Request, thread_id: str | None = None, debug: str = "", p: str = ""):
     """여행 작업실. thread_id 가 없으면 가장 최근 여행 계획 thread, 기록이 없으면 빈 상태(새 대화).
     HTMX 요청이면 작업실 영역(보드, 요약 바, 챗봇 대화)만 돌려준다."""
     graph, cp = get_runtime(request.app)
@@ -174,7 +190,7 @@ async def planner(request: Request, thread_id: str | None = None, debug: str = "
     else:
         latest = next((r for r in rows if r["kind"] == "trip"), None)
         tid = latest["thread_id"] if latest else _new_thread_id()
-    ctx = await _workspace_ctx(graph, tid, debug)
+    ctx = await _workspace_ctx(graph, tid, debug, p if given else "")
     if _is_partial(request):
         resp = _tpl(request).TemplateResponse(request, "partials/workspace.html", ctx)
         resp.headers["Vary"] = "HX-Request"
@@ -252,14 +268,16 @@ async def plan(request: Request, destination: str = Form(""), start_date: str = 
     tid = _new_thread_id()
     PENDING[tid] = summary_text(trip)
     PENDING_TRIP[tid] = trip
-    url = planner_url(tid, debug)
+    token = pending_token.encode(tid, PENDING[tid], trip)
+    url = planner_url(tid, debug, pending=token)
     if request.headers.get("HX-Request"):
         if not _from_workspace(request):
             return Response(status_code=200, headers={"HX-Redirect": url})
         graph, _ = get_runtime(request.app)
-        ctx = await _workspace_ctx(graph, tid, debug)
+        ctx = await _workspace_ctx(graph, tid, debug, token)
         resp = _tpl(request).TemplateResponse(request, "partials/workspace.html", ctx)
-        resp.headers.update({"HX-Push-Url": url, "HX-Retarget": "#board-root", "HX-Reswap": "innerHTML", "Vary": "HX-Request"})
+        # 스트림 주소(message_pair)에 토큰이 들어 있으므로 주소창에는 토큰을 남기지 않는다
+        resp.headers.update({"HX-Push-Url": planner_url(tid, debug), "HX-Retarget": "#board-root", "HX-Reswap": "innerHTML", "Vary": "HX-Request"})
         return resp
     return RedirectResponse(url, status_code=303)
 
@@ -313,22 +331,26 @@ async def chat(request: Request, message: str = Form(""), thread_id: str = Form(
         )
     PENDING[tid] = text
     resp = _tpl(request).TemplateResponse(request, "partials/message_pair.html",
-                                          {"text": text, "thread_id": tid, "debug": _is_debug(debug)})
+                                          {"text": text, "thread_id": tid, "debug": _is_debug(debug),
+                                           "pending": pending_token.encode(tid, text)})
     resp.headers["HX-Trigger"] = "thread-updated"
     return resp
 
 
 @router.get("/chat/stream")
-async def chat_stream(request: Request, thread_id: str = "", debug: str = ""):
+async def chat_stream(request: Request, thread_id: str = "", debug: str = "", p: str = ""):
     tpl = _tpl(request)
     graph, _ = get_runtime(request.app)
     renderer = Renderer(tpl, request, board_context, debug=_is_debug(debug))
     cfg = {"configurable": {"thread_id": thread_id}, "recursion_limit": 25}
 
     async def gen():
-        text = PENDING.pop(thread_id, None)
-        trip = PENDING_TRIP.pop(thread_id, None)
-        if text is None or thread_id in RUNNING:
+        text, trip = (None, None) if thread_id in RUNNING else _take_pending(thread_id, p, pop=True)
+        if p:
+            if len(USED_TOKENS) > 10000:
+                USED_TOKENS.clear()
+            USED_TOKENS.add(p)
+        if text is None:
             for ev in ({"event": "error", "message": "응답을 만들지 못했어요. 잠시 후 다시 시도해 주세요."},
                        {"event": "done", "total_ms": 0}):
                 for name, html in renderer.render(ev):
