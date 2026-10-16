@@ -20,7 +20,14 @@ log = logging.getLogger(__name__)
 
 templates = Jinja2Templates(directory=str(BASE / "templates"))
 # 정적 파일 캐시 무효화용 버전(파일 수정 시각)
-templates.env.globals["asset_v"] = lambda name: int((BASE / "static" / name).stat().st_mtime)
+def _asset_v(name: str) -> int:
+    try:
+        return int((BASE / "static" / name).stat().st_mtime)
+    except OSError:   # 파일이 없어도 페이지 전체가 500 이 되지 않게 (캐시 무효화만 포기)
+        return 0
+
+
+templates.env.globals["asset_v"] = _asset_v
 templates.env.filters["comma"] = lambda v: f"{v:,.0f}" if isinstance(v, (int, float)) else v
 templates.env.filters["snippet"] = clean_snippet
 templates.env.filters["kst"] = kst_stamp
