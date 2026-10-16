@@ -136,53 +136,112 @@ Smart-Travel/
 └─ Designs/                DESIGN.md, COMPONENTS.md, DASHBOARD_*.md
 ```
 
-## 5. 빠른 시작
+## 5. 실행 방법
 
-### Windows PowerShell
+> 요구 사항: **Python 3.11** (3.11.9 에서 검증), Git. API 키가 하나도 없어도 실행됩니다 (5-3 참고).
+
+### 5-1. 설치
+
+**Windows PowerShell**
 
 ```powershell
+git clone https://github.com/DevOps0906/SmartAI-RAG-Tour.git
+cd SmartAI-RAG-Tour
 python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt          # 웹 의존성(requirements-web.txt)도 이미 포함
-Copy-Item .env.example .env              # 키가 없어도 동작 (아래 참고)
-.\scripts\build_css.ps1                  # CSS 를 수정했을 때만 필요 (빌드 결과 app.css 가 이미 포함됨)
-
-python main.py                                          # 대화형 CLI
-python main.py --once "도쿄 날씨 알려줘" --trace        # 한 번만 실행 + 노드 경로 출력
-uvicorn src.web.app:app --port 8765                     # 웹: http://localhost:8765 (랜딩), 작업실 http://localhost:8765/planner
+.venv\Scripts\Activate.ps1               # 실행 정책 오류 시: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+pip install -r requirements.txt          # 웹 의존성(requirements-web.txt)도 포함
+pip install -r requirements-hf.txt       # (권장) 의미 기반 검색용 로컬 임베딩. torch 포함이라 수 분 걸림
+Copy-Item .env.example .env
 ```
 
-### bash (Git Bash / Linux / macOS)
+**bash (Git Bash / Linux / macOS)**
 
 ```bash
+git clone https://github.com/DevOps0906/SmartAI-RAG-Tour.git
+cd SmartAI-RAG-Tour
 python -m venv .venv
-source .venv/Scripts/activate            # Linux/macOS 는 .venv/bin/activate
-pip install -r requirements.txt          # 웹 의존성(requirements-web.txt)도 이미 포함
-cp .env.example .env                     # 키가 없어도 동작 (아래 참고)
-bash scripts/build_css.sh                # CSS 를 수정했을 때만 필요
+source .venv/Scripts/activate            # Linux/macOS 는 source .venv/bin/activate
+pip install -r requirements.txt
+pip install -r requirements-hf.txt       # (권장) 로컬 임베딩
+cp .env.example .env
+```
 
-python main.py
-python main.py --once "도쿄 날씨 알려줘" --trace
+### 5-2. API 키 설정 (`.env`)
+
+| 기능 | 키 | 없을 때 |
+|---|---|---|
+| LLM 의도 분석, 답변 생성 | `ANTHROPIC_API_KEY` (또는 `LLM_PROVIDER=openai` + `OPENAI_API_KEY`) | 규칙 기반 분석, 템플릿 답변 ("LLM 없이 생성된 요약") |
+| 실시간 날씨 | `OPENWEATHER_API_KEY` | mock 날씨 |
+| 실시간 환율 | 필요 없음 (open.er-api.com) | 네트워크 실패 시 mock 환율 |
+
+`.env` 는 `.gitignore` 에 포함되어 커밋되지 않습니다. 키는 `.env` 에만 넣으세요.
+
+### 5-3. RAG 인덱스 만들기
+
+가이드 문서는 `data/guides/*.txt` 5개이고, FAISS 인덱스(`data/index/`)는 저장소에 포함되지 않습니다. 첫 실행 때 자동으로 만들어지지만, 미리 만들어 두면 첫 응답이 빨라집니다.
+
+```bash
+python -m src.rag.index --rebuild
+# 출력 예: 인덱스 준비 완료: 45개 청크 (embedding=huggingface)
+```
+
+- `embedding=huggingface` 로 나오면 정상입니다. 첫 빌드 때 임베딩 모델(`intfloat/multilingual-e5-small`)을 내려받습니다.
+- `embedding=hash` 로 나오면 `requirements-hf.txt` 가 설치되지 않은 상태입니다. 동작은 하지만 의미 기반 검색이 아니므로 "여름 휴양지 추천" 같은 질문의 품질이 떨어집니다. 처음부터 가볍게 쓰려면 `.env` 에서 `EMBEDDING_PROVIDER=hash` 로 두세요.
+- 가이드 파일이나 임베딩·청킹 설정이 바뀌면 다음 실행 때 자동으로 다시 빌드됩니다.
+
+### 5-4. 실행
+
+**CLI**
+
+```bash
+python main.py                                         # 대화형 (종료: quit, exit, q)
+python main.py --once "도쿄 날씨 알려줘" --trace       # 질문 하나 + 노드 실행 경로 출력
+python main.py --plan "도쿄" --start 2026-10-20 --days 4 --places "아사쿠사,시부야" --trace
+```
+
+| 옵션 | 설명 |
+|---|---|
+| `--trace` | 노드 실행 순서와 State 변화 출력 |
+| `--once "질문"` | 질문 하나만 처리하고 종료 |
+| `--plan 여행지` | 여행 계획 생성 (`--start YYYY-MM-DD`, `--days 1~5` 기본 3, `--places "장소,장소"` 비우면 AI 추천) |
+
+`--trace` 출력 예:
+
+```
+[trace] analyze_input: intent=multi, pending=['rag', 'weather', 'exchange']
+[trace] rag_search: docs=5, pending=['weather', 'exchange']
+[trace] weather_tool: weather=ok(live), pending=['exchange']
+[trace] exchange_tool: exchange=ok(live), pending=[]
+[trace] generate_answer
+```
+
+**웹**
+
+```bash
 uvicorn src.web.app:app --port 8765
 ```
 
-참고:
+- 랜딩: http://localhost:8765
+- 여행 작업실: http://localhost:8765/planner
+- 노드 실행 흐름 보기: http://localhost:8765/planner?debug=1
+- 단일 프로세스를 전제로 합니다 (`--workers` 를 늘리지 마세요). CSS 를 수정했을 때만 `scripts/build_css.ps1` (또는 `bash scripts/build_css.sh`) 로 다시 빌드합니다.
 
-- `requirements.txt` 는 이미 웹 의존성(fastapi, uvicorn, jinja2, python-multipart, langgraph-checkpoint-sqlite)을 포함합니다. `requirements-web.txt` 를 따로 설치해도 되지만 필수는 아닙니다.
-- **API 키가 하나도 없어도 동작합니다.** LLM 이 없으면 규칙 기반 분석과 템플릿 답변, 날씨/환율은 mock 데이터를 씁니다. `.env.example` 은 `EMBEDDING_PROVIDER=huggingface` 가 기본이라 `requirements-hf.txt` 를 설치하지 않았다면 경고 후 `hash` 임베딩으로 자동 폴백합니다. 처음부터 가볍게 쓰려면 `.env` 에서 `EMBEDDING_PROVIDER=hash` 로 두세요.
-- 웹 서버는 단일 프로세스를 전제로 합니다 (`--workers` 1).
+### 5-5. 문제 해결
 
-### 랜딩과 여행 계획 모달 (웹)
+| 증상 | 해결 |
+|---|---|
+| 답변에 "(LLM 없이 생성된 요약)" 이 붙음 | `.env` 의 `ANTHROPIC_API_KEY` 가 비어 있음 |
+| "hash 임베딩으로 대체합니다" 경고 | `pip install -r requirements-hf.txt` 후 `python -m src.rag.index --rebuild` |
+| pip 설치 중 `WinError 32` (다른 프로세스가 파일 사용 중) | 실행 중인 서버, pip 를 모두 종료한 뒤 다시 설치 |
+| PowerShell 에서 `Activate.ps1` 실행 불가 | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
+| 콘솔 한글 깨짐 (Windows) | `$env:PYTHONIOENCODING="utf-8"` 설정 후 실행 |
+| 포트 8765 사용 중 | `--port` 를 다른 번호로 |
+
+### 5-6. 웹 사용 흐름 (랜딩과 여행 계획 모달)
 
 서버를 열면 먼저 **랜딩(`/`)** 이 나옵니다(히어로, 인기 코스). 상단 로고는 항상 랜딩으로 돌아가고, 작업실은 **여행 작업실**(`/planner`)입니다. 만든 계획은 이 브라우저의 localStorage(`smart-travel:plans`)에 저장되어 랜딩의 "내 여행 계획"에서 다시 열 수 있습니다("이 기기에서 삭제"로 지울 수 있음).
 
 헤더의 **새 여행 계획** 버튼(또는 빈 보드의 CTA)을 누르면 팝업이 열립니다. 여행지(5곳) → 출발일과 여행 일수(1~5일차 버튼, 기본 3일차) → 가고 싶은 장소(칩 선택 또는 직접 입력, 비우면 AI 추천)를 고르고 **계획 만들기**를 누르면, 새 대화로 이동해 일정, 여행기간중 날씨현황, 환율, 가이드가 보드에 채워집니다. 이후 챗봇에 "2일차 맛집 더 알려줘", "교통 자세히"처럼 물으면 보드의 **요청한 정보**에 카드로 쌓입니다. 실행 흐름(노드·상태·ms)은 `http://localhost:8765/planner?debug=1` 에서만 보입니다.
-
-CLI 에서는 다음처럼 씁니다 (`--days` 1~5, 기본 3).
-
-```bash
-python main.py --plan "도쿄" --start 2026-10-20 --days 4 --places "아사쿠사,시부야" --trace
-```
 
 계획 생성 경로: `analyze_input → rag_search → weather_tool → exchange_tool → plan_itinerary → generate_answer`. 예보 범위(약 5일) 밖 날짜는 가이드의 계절 설명("예상 기후")으로 표시합니다.
 
